@@ -97,7 +97,8 @@ The client declares `hover.contentFormat: ["markdown", "plaintext"]`, and the co
 comes back by its kind (`HoverMarkdown`). Markdown is parsed with Markdig, with its HTML extension never enabled, and
 the subset hovers use is drawn as such: paragraphs, emphasis, inline and fenced code, links, lists, quotes, headings
 and rules. A `vb`, `vb6` or `vba` fence is coloured by the code window's syntax highlighting (its definition's
-keyword, string and comment colours; a server's semantic tokens are not applied to a hover). Raw HTML is shown as text,
+keyword, string and comment colours; a server's semantic tokens are not applied to a hover). A fence longer than
+4,000 characters is plain code, since colouring runs on the UI thread and the card shows less than that. Raw HTML is shown as text,
 an image as its alternative text (never fetched), and a link is drawn but not followed, since the card is a tooltip
 and cannot be clicked. Plain text is shown as it came, up to the cut below. The card is the editor's own `ToolTip`, coloured by the theme's
 `Hover*` keys; the automation `hover` tool reads it as it reads any tip that is a control, its text blocks joined

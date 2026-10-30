@@ -194,6 +194,19 @@ public class HoverCardTests
     }
 
     [AvaloniaFact]
+    public void A_VB_fence_too_long_to_colour_is_plain_code()
+    {
+        var line = "Dim x As Long\n";
+        var fence = string.Concat(Enumerable.Repeat(line, HoverMarkdown.MaxHighlightedLength / line.Length + 1));
+        var shown = HoverMarkdown.Render(Markdown($"```vba\n{fence}```"), Code);
+
+        var block = Blocks(shown).Single();
+        block.Inlines.Should().BeNullOrEmpty("colouring runs on the UI thread, character by character");
+        block.Text.Should().Be(fence.TrimEnd('\n'));
+        block.FontFamily.Should().Be(Code);
+    }
+
+    [AvaloniaFact]
     public void Pressing_a_link_in_a_hover_does_nothing()
     {
         var card = HoverCard.Build([], Markdown("[run](command:x.run) and [page](https://example.invalid)"), Code)!;

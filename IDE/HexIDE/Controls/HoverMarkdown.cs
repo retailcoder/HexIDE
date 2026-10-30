@@ -61,6 +61,12 @@ internal static class HoverMarkdown
     /// <summary>How deep blocks and inlines are drawn inside one another; deeper ones are shown as their source text.</summary>
     internal const int MaxDepth = 16;
 
+    /// <summary>
+    /// The longest VB fence that is coloured. Colouring runs on the UI thread, character by character, so a longer one is
+    /// shown as plain code: more than a card can show, and not worth holding the editor for.
+    /// </summary>
+    internal const int MaxHighlightedLength = 4_000;
+
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().DisableHtml().Build();
 
     // At MaxLength, and never between the two halves of a surrogate pair, which would leave half a character on show.
@@ -205,7 +211,7 @@ internal static class HoverMarkdown
         var text = code.Lines.ToString();
         var block = new TextBlock { FontFamily = codeFont, TextWrapping = TextWrapping.Wrap };
         var language = (code as FencedCodeBlock)?.Info;
-        if (language is not null && HighlightedFences.Contains(language))
+        if (language is not null && HighlightedFences.Contains(language) && text.Length <= MaxHighlightedLength)
             block.Inlines = Highlighted(text);
         else
             block.Text = text;
