@@ -91,7 +91,7 @@ public class DiagnosticTagsAndRelatedTests : IAsyncDisposable
     {
         var card = HoverCard.Build(
             [new LspMarker(0, 3, false, "Duplicate declaration", "RDCore", Related: ["Module2.bas:12: first declared here"])],
-            null, new FontFamily("Courier New"));
+            (MarkupContent?)null, new FontFamily("Courier New"));
 
         UiAutomationDriver.TipText(card).Should().Be("RDCore: Duplicate declaration / Module2.bas:12: first declared here");
     }

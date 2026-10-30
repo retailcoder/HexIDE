@@ -1518,10 +1518,14 @@ public partial class CodeEditorView : UserControl
             ShowDiagnosticTip(pos, null);
             var result = requestQuickInfo
                 ? await vm.RequestHoverAsync(pos, token) : null;
+            // Read off the UI thread: a server's Markdown is the server's, and the editor should not wait on parsing it.
+            var parsed = result is { Contents.Value.Length: > 0 } hover
+                ? await Task.Run(() => HoverMarkdown.Parse(hover.Contents), token)
+                : null;
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (token.IsCancellationRequested) return;
-                ShowDiagnosticTip(pos, result?.Contents);
+                ShowDiagnosticTip(pos, parsed);
             });
         }
         catch (OperationCanceledException) { }
@@ -1531,7 +1535,7 @@ public partial class CodeEditorView : UserControl
         }
     }
 
-    private void ShowDiagnosticTip(Position pos, MarkupContent? quickInfo)
+    private void ShowDiagnosticTip(Position pos, HoverMarkdown.ParsedHover? quickInfo)
     {
         var offset = TextEditor.Document.GetOffset(pos.Line + 1, pos.Character + 1);
         var here = new List<LspMarker>();

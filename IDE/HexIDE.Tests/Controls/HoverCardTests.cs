@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
 using HexIDE.Automation;
@@ -127,8 +128,58 @@ public class HoverCardTests
         card.Should().NotBeNull();
         UiAutomationDriver.TipText(card).Should().Be("RDCore: Variable not defined / unused / Dim x",
             "the automation hover tool reads the card as it always read the tip");
-        HoverCard.Build([], null, Code).Should().BeNull();
+        HoverCard.Build([], (MarkupContent?)null, Code).Should().BeNull();
         HoverCard.Build([], new MarkupContent("markdown", ""), Code).Should().BeNull();
+    }
+
+    [AvaloniaFact]
+    public void A_reply_nested_beyond_reason_is_drawn_to_a_depth_and_shown_as_text_below_it()
+    {
+        // Deeper than the parser itself will go: the reply is shown as the text it is.
+        var refused = HoverMarkdown.Render(Markdown(new string('>', 5_000) + " x"), Code);
+        refused.Should().BeOfType<TextBlock>().Which.Text.Should().EndWith(" x");
+
+        // Within what the parser takes, and still deeper than is drawn: drawn to a depth, and the rest as text.
+        var shown = HoverMarkdown.Render(Markdown(new string('>', 60) + " x"), Code);
+        var levels = 0;
+        for (Control? at = shown; at is not null; levels++)
+            at = at.GetLogicalChildren().OfType<Control>().FirstOrDefault(c => c is Border or StackPanel);
+        levels.Should().BeLessThan(HoverMarkdown.MaxDepth * 4, "nesting is drawn to a depth, not without end");
+        TextOf(shown).Should().EndWith("x", "what is deeper is shown as its text");
+
+        var emphasis = string.Concat(Enumerable.Repeat("*a ", 3_000)) + "b" + string.Concat(Enumerable.Repeat(" a*", 3_000));
+        var drawn = () => HoverMarkdown.Render(Markdown(emphasis), Code);
+        drawn.Should().NotThrow();
+    }
+
+    [AvaloniaFact]
+    public void A_reply_longer_than_any_card_is_cut_and_scrolls_within_a_height()
+    {
+        var huge = string.Concat(Enumerable.Repeat("word ", 10_000));
+        var parsed = HoverMarkdown.Parse(new MarkupContent("plaintext", huge));
+        parsed.Text.Length.Should().Be(HoverMarkdown.MaxLength + 1, "cut, with the cut marked");
+        parsed.Text.Should().EndWith("…");
+
+        var card = HoverCard.Build([], parsed, Code)!;
+        var scroller = card.GetLogicalDescendants().OfType<ScrollViewer>().Should().ContainSingle().Subject;
+        scroller.MaxHeight.Should().Be(HoverCard.MaxHeight);
+    }
+
+    [AvaloniaFact]
+    public void Pressing_a_link_in_a_hover_does_nothing()
+    {
+        var card = HoverCard.Build([], Markdown("[run](command:x.run) and [page](https://example.invalid)"), Code)!;
+        var window = new Window { Content = card };
+        window.Show();
+        var block = card.GetLogicalDescendants().OfType<TextBlock>().Single(b => b.Inlines?.Text?.Contains("run") == true);
+
+        var press = new PointerPressedEventArgs(block, new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, true), window,
+            new Avalonia.Point(1, 1), 0, new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed),
+            KeyModifiers.None);
+        block.RaiseEvent(press);
+
+        press.Handled.Should().BeFalse("nothing in a hover takes a press, so no link is followed and no command is run");
+        window.Close();
     }
 
     [AvaloniaFact]

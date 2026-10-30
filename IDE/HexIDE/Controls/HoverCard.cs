@@ -26,11 +26,18 @@ internal static class HoverCard
     /// <summary>The widest a card grows before its text wraps.</summary>
     internal const double MaxWidth = 560;
 
+    /// <summary>The tallest a card grows; what is longer scrolls inside it.</summary>
+    internal const double MaxHeight = 360;
+
     /// <summary>The card for these diagnostics and this quick info, or null when there is nothing to show.</summary>
     /// <param name="markers">The diagnostics under the pointer, in the order they are drawn.</param>
     /// <param name="quickInfo">The server's hover, or null.</param>
     /// <param name="codeFont">The code window's font, for code in the quick info.</param>
-    public static ToolTip? Build(IEnumerable<LspMarker> markers, MarkupContent? quickInfo, FontFamily codeFont)
+    public static ToolTip? Build(IEnumerable<LspMarker> markers, MarkupContent? quickInfo, FontFamily codeFont) =>
+        Build(markers, quickInfo is { Value.Length: > 0 } info ? HoverMarkdown.Parse(info) : null, codeFont);
+
+    /// <summary>The card, from a quick info already read off the UI thread (<see cref="HoverMarkdown.Parse"/>).</summary>
+    public static ToolTip? Build(IEnumerable<LspMarker> markers, HoverMarkdown.ParsedHover? quickInfo, FontFamily codeFont)
     {
         var sections = new StackPanel { Spacing = 8, MaxWidth = MaxWidth };
         foreach (var marker in markers)
@@ -47,7 +54,7 @@ internal static class HoverCard
                 sections.Children.Add(new TextBlock { Text = related, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, -4, 0, 0) });
         }
 
-        if (quickInfo is { Value.Length: > 0 } info)
+        if (quickInfo is { Text.Length: > 0 } info)
         {
             if (sections.Children.Count > 0)
             {
@@ -60,7 +67,15 @@ internal static class HoverCard
 
         if (sections.Children.Count == 0) return null;
 
-        var tip = new ToolTip { Content = sections, BorderThickness = new Thickness(1), Padding = new Thickness(8, 6) };
+        // However much a server says, the card stays a card: what does not fit scrolls rather than filling the screen.
+        var content = new ScrollViewer
+        {
+            Content = sections,
+            MaxHeight = MaxHeight,
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+        };
+        var tip = new ToolTip { Content = content, BorderThickness = new Thickness(1), Padding = new Thickness(8, 6) };
         tip.Bind(TemplatedControl.BackgroundProperty, tip.GetResourceObservable(BackgroundKey));
         tip.Bind(TemplatedControl.ForegroundProperty, tip.GetResourceObservable(ForegroundKey));
         tip.Bind(TemplatedControl.BorderBrushProperty, tip.GetResourceObservable(BorderKey));
