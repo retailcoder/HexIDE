@@ -115,6 +115,15 @@
     <SolidColorBrush x:Key="ReadOnlyTextBrush" Color="#707070" />
     <SolidColorBrush x:Key="InactiveCodeTextBrush" Color="#707070" />
 
+    <!-- The code window's hover card: a language server's quick info and the diagnostics under the pointer. A modern
+         light card rather than VB6's yellow Info tip: the editor keeps VB6's look, the chrome around it does not. The
+         code background is the editor's own, so code in a hover keeps the code window's syntax colours legible. -->
+    <SolidColorBrush x:Key="HoverBackgroundBrush" Color="#F5F5F7" />
+    <SolidColorBrush x:Key="HoverForegroundBrush" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="HoverBorderBrush" Color="#C4C4CC" />
+    <SolidColorBrush x:Key="HoverCodeBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="HoverLinkBrush" Color="#0B5CAD" />
+
     <!-- Warning triangle icon (amber, with exclamation) for the developer-mode banner -->
     <DrawingImage x:Key="WarningTriangleIcon">
         <DrawingImage.Drawing>

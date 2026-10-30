@@ -141,6 +141,56 @@ public class ShippedThemePackTests
             $"{pack}'s read-only text {readOnly} has to read as different from its text {text}");
     }
 
+    public static TheoryData<string, string> HoverKeys => new()
+    {
+        { "HoverBackground", "HoverBackgroundBrush" },
+        { "HoverForeground", "HoverForegroundBrush" },
+        { "HoverBorder", "HoverBorderBrush" },
+        { "HoverCodeBackground", "HoverCodeBackgroundBrush" },
+        { "HoverLink", "HoverLinkBrush" },
+    };
+
+    [Theory]
+    [MemberData(nameof(HoverKeys))]
+    public void AThemePackCanNameEachHoverKey_AndClassicsReferenceCopyMatchesItsDefault(string name, string resourceKey)
+    {
+        ColorKeyMapping.Table.Should().ContainKey(name);
+        ColorKeyMapping.Table[name].Should().Be((resourceKey, true));
+        var classic = ClassicDefault(resourceKey);
+        classic.Should().NotBeNull("Classic.axaml declares the default");
+        Color.Parse(ColoursOf("Classic")[name]).Should().Be(classic!.Value);
+        foreach (var pack in new[] { "Dark", "Abyss" })
+            ColoursOf(pack).Should().ContainKey(name, $"{pack} would otherwise draw Classic's light card on a dark IDE");
+    }
+
+    [Theory]
+    [InlineData("Classic", "HoverForeground", "HoverBackground")]
+    [InlineData("Classic", "HoverForeground", "HoverCodeBackground")]
+    [InlineData("Classic", "HoverLink", "HoverBackground")]
+    [InlineData("Dark", "HoverForeground", "HoverBackground")]
+    [InlineData("Dark", "HoverForeground", "HoverCodeBackground")]
+    [InlineData("Dark", "HoverLink", "HoverBackground")]
+    [InlineData("Abyss", "HoverForeground", "HoverBackground")]
+    [InlineData("Abyss", "HoverForeground", "HoverCodeBackground")]
+    [InlineData("Abyss", "HoverLink", "HoverBackground")]
+    public void HoverTextIsLegibleOnItsCard(string pack, string foreground, string background)
+    {
+        var colours = ColoursOf(pack);
+        SyntaxHighlightingTheme.ContrastRatio(Color.Parse(colours[foreground]), Color.Parse(colours[background]))
+            .Should().BeGreaterThanOrEqualTo(Legible, $"{pack}'s {foreground} on its {background}");
+    }
+
+    [Theory]
+    [MemberData(nameof(Packs))]
+    public void CodeInAHoverSitsOnThePacksOwnEditorBackground(string pack)
+    {
+        // The syntax colours are tuned to the editor's background, so code in a hover keeps them legible only there.
+        var colours = pack == "Classic" ? [] : ColoursOf(pack);
+        var window = colours.TryGetValue("Window", out var hex) ? Color.Parse(hex) : ClassicDefault("WindowBrushKey")!.Value;
+        var code = pack == "Classic" ? ClassicDefault("HoverCodeBackgroundBrush")!.Value : Color.Parse(colours["HoverCodeBackground"]);
+        code.Should().Be(window);
+    }
+
     /// <summary>
     /// The colours a pack renders: its own where it names them, Classic's where it does not, as the pack's
     /// dictionary sits over Classic.axaml in the running IDE. Classic itself renders Classic.axaml alone.

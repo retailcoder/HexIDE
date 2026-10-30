@@ -19,6 +19,7 @@
         <PackageReference Include="Avalonia.Controls.DataGrid" />
         <PackageReference Include="Avalonia.Controls.ColorPicker" />
         <PackageReference Include="Classic.Avalonia.Theme" />
+        <PackageReference Include="Markdig" />
         <PackageReference Include="CommunityToolkit.Mvvm" />
         <PackageReference Include="Pure.DI" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
         <PackageReference Include="Dock.Avalonia" />

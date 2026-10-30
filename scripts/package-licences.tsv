@@ -34,6 +34,7 @@ Dock.Model.Avalonia	MIT
 Dock.Model.MVVM	MIT
 EmmyLua.LanguageServer.Framework	MIT
 LanguageExt.Core	MIT
+Markdig	BSD-2-Clause
 MessagePack	MIT
 Microsoft.Extensions.Logging.Abstractions	MIT
 Microsoft.Testing.Extensions.HangDump	MIT

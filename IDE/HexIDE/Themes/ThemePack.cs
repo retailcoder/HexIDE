@@ -73,6 +73,13 @@ internal static class ColorKeyMapping
             ["BracketDepth2"] = ("BracketDepth2Brush", true),
             ["BracketDepth3"] = ("BracketDepth3Brush", true),
             ["BracketUnmatched"] = ("BracketUnmatchedBrush", true),
+            // The code window's hover card. Every shipped pack carries them; ShippedThemePackTests checks the text on
+            // each background.
+            ["HoverBackground"] = ("HoverBackgroundBrush", true),
+            ["HoverForeground"] = ("HoverForegroundBrush", true),
+            ["HoverBorder"] = ("HoverBorderBrush", true),
+            ["HoverCodeBackground"] = ("HoverCodeBackgroundBrush", true),
+            ["HoverLink"] = ("HoverLinkBrush", true),
             // Accent colors stored as Color (not SolidColorBrush), matching Classic.axaml
             ["SystemAccentColor"]       = ("SystemAccentColor",                          false),
             ["SystemAccentColorLight1"] = ("SystemAccentColorLight1",                    false),
