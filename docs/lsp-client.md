@@ -591,11 +591,17 @@ The editor's squiggle tooltip shows overlapping messages and supplied sources al
 every personality, including Classic (#451), even with Auto Quick Info disabled. Codes and navigation
 still need an error list; that larger surface remains separate from the tooltip.
 
-Still dropped: `tags`, `relatedInformation` and `data`, each for a different reason and tracked as
-[#453](https://github.com/hexide-io/HexIDE/issues/453). `tags` would change how a diagnostic is drawn
-rather than add text to it, which is a rendering decision rather than a plumbing one;
-`relatedInformation` still needs a presentation beyond the message tooltip (#453); and `data` is only meaningful if
-code actions from a foreign server are relayed, which is an open question rather than a settled no.
+`tags` and `relatedInformation` are kept too ([#453](https://github.com/hexide-io/HexIDE/issues/453)), on both
+paths, as raw JSON read leniently: an entry that does not read as one is skipped, and costs nothing else.
+- **Tags** change how the marked text is drawn, as the specification suggests. `Unnecessary` (ruff's unused
+  import) is faded, its own colours kept at half strength. `Deprecated` is struck through. The squiggle stays.
+  The client declares `tagSupport` for both.
+- **Related locations** are listed under the diagnostic's message in the hover card, one line each:
+  `Module2.bas:12: first declared here`. The card is a tooltip, so they cannot be clicked yet. The client
+  declares `relatedInformation`.
+
+`data` is still dropped. It is only meaningful once code actions are requested, and a capability is declared
+with the code that uses it; it is kept in the change that requests them.
 
 ### Some servers publish; some only answer
 

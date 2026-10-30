@@ -30,9 +30,15 @@ public enum DiagnosticSeverity
 /// <see cref="CodeText"/> rather than by inspecting the element at each use.
 ///
 /// <para>
-/// The protocol also defines <c>tags</c>, <c>relatedInformation</c> and <c>data</c>, which are still
-/// dropped. <c>tags</c> would change how a diagnostic is drawn rather than add text to it, and that is a
-/// rendering decision rather than a plumbing one (hexide-io/HexIDE#426).
+/// <b><c>tags</c> and <c>relatedInformation</c> are kept as the server sent them</b>, and read through
+/// <see cref="Tags"/> and <see cref="RelatedInformation"/>, for the reason <c>code</c> is: a push notification
+/// is deserialized straight into this record, so a member typed strictly would let one malformed entry throw
+/// away every diagnostic in the notification (#238). What does not read as a tag or a related location is
+/// skipped instead (hexide-io/HexIDE#453).
+/// </para>
+/// <para>
+/// <c>data</c> is still dropped. It is the server's handle for its code actions, and nothing here requests
+/// code actions yet; it is kept once something does, since a capability is declared with the code that uses it.
 /// </para>
 /// </remarks>
 public record Diagnostic(
@@ -45,8 +51,53 @@ public record Diagnostic(
     [property: JsonPropertyName("code")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] System.Text.Json.JsonElement? Code = null,
     [property: JsonPropertyName("codeDescription")]
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CodeDescription? CodeDescription = null)
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CodeDescription? CodeDescription = null,
+    // Appended, never inserted: this record is constructed positionally on the pull path and in tests.
+    [property: JsonPropertyName("tags")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] System.Text.Json.JsonElement? RawTags = null,
+    [property: JsonPropertyName("relatedInformation")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] System.Text.Json.JsonElement? RawRelatedInformation = null)
 {
+    /// <summary>How the server says to draw it: faded when unnecessary, struck through when deprecated.</summary>
+    /// <remarks>A value the protocol does not define is skipped, as the protocol lets a client do.</remarks>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<DiagnosticTag> Tags =>
+        RawTags is { ValueKind: JsonValueKind.Array } tags
+            ? [.. tags.EnumerateArray()
+                .Where(t => t.ValueKind == JsonValueKind.Number && t.TryGetInt32(out var v) && Enum.IsDefined((DiagnosticTag)v))
+                .Select(t => (DiagnosticTag)t.GetInt32())
+                .Distinct()]
+            : [];
+
+    /// <summary>
+    /// The other places the server says belong to this one — where a duplicate was first declared, say — each with
+    /// what it says of it. An entry without a location and a message is skipped.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<DiagnosticRelatedInformation> RelatedInformation
+    {
+        get
+        {
+            if (RawRelatedInformation is not { ValueKind: JsonValueKind.Array } entries) return [];
+            var read = new List<DiagnosticRelatedInformation>();
+            foreach (var entry in entries.EnumerateArray())
+            {
+                if (entry.ValueKind == JsonValueKind.Object
+                    && entry.TryGetProperty("message", out var message) && message.ValueKind == JsonValueKind.String
+                    && entry.TryGetProperty("location", out var location) && location.ValueKind == JsonValueKind.Object
+                    && location.TryGetProperty("uri", out var uri) && uri.ValueKind == JsonValueKind.String
+                    && location.TryGetProperty("range", out var range) && range.ValueKind == JsonValueKind.Object
+                    && range.TryGetProperty("start", out var start) && start.ValueKind == JsonValueKind.Object
+                    && start.TryGetProperty("line", out var line) && line.TryGetInt32(out var lineNumber)
+                    && start.TryGetProperty("character", out var character) && character.TryGetInt32(out var column))
+                {
+                    read.Add(new DiagnosticRelatedInformation(uri.GetString()!, new Position(lineNumber, column), message.GetString()!));
+                }
+            }
+            return read;
+        }
+    }
+
     /// <summary>
     /// The code as text — <c>F401</c>, <c>MD012</c>, <c>VBC00001</c> — or null when the server sent none.
     /// </summary>
@@ -63,6 +114,22 @@ public record Diagnostic(
         _ => null,
     };
 }
+
+/// <summary>How a diagnostic asks to be drawn, beyond its severity.</summary>
+public enum DiagnosticTag
+{
+    /// <summary>Unused or unnecessary code: drawn faded.</summary>
+    Unnecessary = 1,
+
+    /// <summary>Deprecated or obsolete code: drawn struck through.</summary>
+    Deprecated = 2,
+}
+
+/// <summary>Another place a diagnostic concerns, and what the server says of it.</summary>
+/// <param name="Uri">The document, which may be another than the diagnostic's own.</param>
+/// <param name="Start">Where in it, zero-based as the protocol counts.</param>
+/// <param name="Message">What the server says of that place.</param>
+public sealed record DiagnosticRelatedInformation(string Uri, Position Start, string Message);
 
 /// <summary>Where a diagnostic's code is documented.</summary>
 public record CodeDescription(
@@ -357,8 +424,19 @@ public record ExecuteCommandClientCapabilities();
 public record TextDocumentSyncClientCapabilities(
     [property: JsonPropertyName("didSave")] bool DidSave = false);
 
+/// <summary>What the client does with a diagnostic's optional members, for both the push and the pull path.</summary>
+/// <remarks>
+/// Declared with the code that uses each (hexide-io/HexIDE#453): related locations are listed in the code window's
+/// hover card, and the two tags change how the marked text is drawn.
+/// </remarks>
 public record PublishDiagnosticsClientCapabilities(
-    [property: JsonPropertyName("relatedInformation")] bool RelatedInformation = false);
+    [property: JsonPropertyName("relatedInformation")] bool RelatedInformation = false,
+    [property: JsonPropertyName("tagSupport")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] DiagnosticTagSupport? TagSupport = null);
+
+/// <summary>The tags the client draws.</summary>
+public record DiagnosticTagSupport(
+    [property: JsonPropertyName("valueSet")] DiagnosticTag[] ValueSet);
 
 /// <summary>
 /// Declares that the client will ask for diagnostics rather than only be told them.

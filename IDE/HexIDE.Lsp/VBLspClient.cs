@@ -575,7 +575,9 @@ public sealed class VBLspClient : ILspClient
             Locale: _locale(),
             Capabilities: new ClientCapabilities(
                 new TextDocumentClientCapabilities(
-                    PublishDiagnostics: new PublishDiagnosticsClientCapabilities(),
+                    PublishDiagnostics: new PublishDiagnosticsClientCapabilities(
+                        RelatedInformation: true,
+                        TagSupport: new DiagnosticTagSupport([DiagnosticTag.Unnecessary, DiagnosticTag.Deprecated])),
                     // Markdown first, as preferred: the code window's hover card renders it (HoverMarkdown). Plain text
                     // stays listed, and a reply marked plaintext is shown as it is, never parsed.
                     Hover: new HoverClientCapabilities(ContentFormat: ["markdown", "plaintext"]),
@@ -1277,8 +1279,14 @@ public sealed class VBLspClient : ILspClient
             ? h.GetString()
             : null;
 
+        // Kept as sent, cloned for the reason `code` is, and read leniently through the record (#453).
+        JsonElement? tags = element.TryGetProperty("tags", out var t) && t.ValueKind == JsonValueKind.Array ? t.Clone() : null;
+        JsonElement? related = element.TryGetProperty("relatedInformation", out var r) && r.ValueKind == JsonValueKind.Array
+            ? r.Clone()
+            : null;
+
         return new Diagnostic(range, message, severity, source, code,
-            href is null ? null : new CodeDescription(href));
+            href is null ? null : new CodeDescription(href), tags, related);
     }
 
     public async Task DidCreateFilesAsync(string[] uris, CancellationToken cancellationToken = default)
