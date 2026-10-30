@@ -221,6 +221,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.MessageLogged -= OnInnerLogMessage;
             client.TraceReceived -= OnInnerTrace;
             client.StateChanged -= OnInnerStateChanged;
+            client.CodeLensesRefreshRequested -= OnInnerCodeLensRefresh;
             try { await client.StopAsync(); } catch (Exception ex) { _logger.LogDebug(ex, "Stop failed for {Id}", e.Registration.Id); }
             client.ProgressReceived -= OnInnerProgress;
             e.Client = null;
@@ -644,6 +645,11 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
     /// picking a server, and the whole point of routing by declaration is that no such pick is safe.
     /// </para>
     /// </remarks>
+    /// <summary>Whether a started server declares the command, which is where <see cref="ExecuteCommandAsync"/> sends it.</summary>
+    public bool CanExecuteCommand(string command) =>
+        _entries.Any(e => e.Client is { IsRunning: true } client
+                          && ServerCapabilities.DeclaresCommand(client.AdvertisedCapabilities, command));
+
     public async Task<JsonElement?> ExecuteCommandAsync(
         string command, JsonElement[]? arguments = null, CancellationToken ct = default)
     {
@@ -846,6 +852,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.MessageLogged -= OnInnerLogMessage;
             client.TraceReceived -= OnInnerTrace;
             client.StateChanged -= OnInnerStateChanged;
+            client.CodeLensesRefreshRequested -= OnInnerCodeLensRefresh;
             try { await client.StopAsync(); }
             catch (Exception ex) { _logger.LogDebug(ex, "Stop failed for {Id}", e.Registration.Id); }
             client.ProgressReceived -= OnInnerProgress;
@@ -943,6 +950,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.MessageLogged += OnInnerLogMessage;
             client.TraceReceived += OnInnerTrace;
             client.StateChanged += OnInnerStateChanged;
+            client.CodeLensesRefreshRequested += OnInnerCodeLensRefresh;
             e.Client = client;
 
             await client.StartAsync(cancellationToken);
@@ -1024,6 +1032,11 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
         ConnectionsChanged?.Invoke(this, EventArgs.Empty);
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    /// <summary>Forwarded with this registry as the sender: whoever shows lenses asks every claimant again.</summary>
+    public event EventHandler? CodeLensesRefreshRequested;
+
+    private void OnInnerCodeLensRefresh(object? sender, EventArgs e) => CodeLensesRefreshRequested?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
     /// Merged and forwarded with this registry as the sender: subscribers key on the URI, and which server

@@ -972,6 +972,17 @@ quietly; it would run something.
 document symbol produce one duplicated dropdown entry; two servers offering a lens on the same line offer
 two genuinely different things, and dropping either would hide something the user could have done.
 
+**The code window draws them after the line each starts on** (`CodeLensGenerator`), dimmed in the read-only
+colour and separated by `|`. They take no place in the document, so the caret, the selection and edits never meet
+them. The text view has no line of its own to put between two document lines, and faking one would move every line
+below it, so they follow the text rather than sit above it. They are asked for with the folds and the semantic
+tokens: when the window opens, after an edit settles, when a server's state changes, and when a server sends
+`workspace/codeLens/refresh` (declared as `workspace.codeLens.refreshSupport`).
+
+**A lens is clickable only when its command would run.** Clicking runs it on the server that declared it, by the
+rule above. A lens whose command no started server declares is drawn as text, since clicking it would do nothing,
+which reads as a fault. A lens still unresolved after `codeLens/resolve` has no command, and is not drawn.
+
 ## Custom methods
 
 `vb/builtinSymbols` is HexIDE's own method, not an LSP one. It is gated on the server advertising it under
@@ -987,7 +998,7 @@ specification's own [`metaModel.json`](https://raw.githubusercontent.com/microso
 the canonical machine-readable list, so the method names and directions are the specification's rather than
 this document's recollection of them.
 
-**HexIDE implements 34 of the 93.** That is not a deficiency in itself — no client implements them all, and
+**HexIDE implements 35 of the 93.** That is not a deficiency in itself — no client implements them all, and
 most of the remainder are features no VB6 IDE needs. It is here so the shape of the gap is visible rather
 than inferred.
 
@@ -1055,12 +1066,12 @@ than inferred.
 | ○ | `textDocument/willSave` | → |  |
 | ○ | `textDocument/willSaveWaitUntil` | → |  |
 
-### `workspace/*` — 5 of 21
+### `workspace/*` — 6 of 21
 
 | | Method | Dir | Notes |
 |---|---|---|---|
 | ○ | `workspace/applyEdit` | ← | A server cannot ask the IDE to edit a document |
-| ○ | `workspace/codeLens/refresh` | ← |  |
+| ✅ | `workspace/codeLens/refresh` | ← | Asks every open code window's lenses again |
 | ○ | `workspace/configuration` | ← | A server asking for its configuration is refused |
 | ○ | `workspace/diagnostic` | → | The pull model, workspace-wide ([#284](https://github.com/hexide-io/HexIDE/issues/284)) |
 | ✅ | `workspace/diagnostic/refresh` | ← | Re-asks every open document; the only way a pull-model server can report a change that is not a document |

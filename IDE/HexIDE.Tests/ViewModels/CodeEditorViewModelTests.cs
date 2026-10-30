@@ -708,6 +708,27 @@ public class CodeEditorViewModelTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task CodeLenses_AreAskedOfTheClient_RunOnIt_AndAskedAgainWhenAServerSays()
+    {
+        var form = TestHelpers.CreateForm(name: "Form1");
+        var vm = CreateSut().Initialize(form);
+        var lens = new CodeLens(new Lsp.Messages.Range(new Position(0, 0), new Position(0, 3)), new Command("Run", "test.run"));
+        _lspClient.RequestCodeLensesAsync("untitled:TestProject/Form1.frm", Arg.Any<CancellationToken>()).Returns([lens]);
+        _lspClient.CanExecuteCommand("test.run").Returns(true);
+        var asked = 0;
+        vm.LanguageServerStateChanged += () => asked++;
+
+        (await vm.RequestCodeLensesAsync()).Should().Equal(lens);
+        vm.CanRunCommand(lens.Command!).Should().BeTrue();
+        await vm.RunCommandAsync(lens.Command!);
+        await _lspClient.Received(1).ExecuteCommandAsync("test.run", null, Arg.Any<CancellationToken>());
+
+        _lspClient.CodeLensesRefreshRequested += Raise.Event();
+        Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+        asked.Should().Be(1, "a server's refresh is one more reason for the view to ask again");
+    }
+
+    [AvaloniaFact]
     public async Task RequestFoldingRangesAsync_DelegatesToLspClient()
     {
         var form = TestHelpers.CreateForm(name: "Form1");

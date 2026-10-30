@@ -1018,9 +1018,15 @@ public partial class CodeEditorViewModel : BaseEditorWindowViewModel, ISearchabl
             languageServerStateHandler = (_, _) =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => LanguageServerStateChanged?.Invoke());
             lspClient.StateChanged += languageServerStateHandler;
+            // A server asking for its lenses to be asked again is, to the view, one more reason to ask.
+            lspClient.CodeLensesRefreshRequested += languageServerStateHandler;
             AutoDispose(new ActionDisposable(() =>
             {
-                if (languageServerStateHandler is { } handler) lspClient.StateChanged -= handler;
+                if (languageServerStateHandler is { } handler)
+                {
+                    lspClient.StateChanged -= handler;
+                    lspClient.CodeLensesRefreshRequested -= handler;
+                }
             }));
         }
     }
@@ -1915,6 +1921,17 @@ public partial class CodeEditorViewModel : BaseEditorWindowViewModel, ISearchabl
 
     public Task<FoldingRange[]> RequestFoldingRangesAsync(CancellationToken ct = default)
         => LiveDocumentUri is { } uri ? lspClient.RequestFoldingRangesAsync(uri, ct) : Task.FromResult<FoldingRange[]>([]);
+
+    /// <summary>The code lenses every server claiming this document offers, resolved.</summary>
+    public Task<CodeLens[]> RequestCodeLensesAsync(CancellationToken ct = default)
+        => LiveDocumentUri is { } uri ? lspClient.RequestCodeLensesAsync(uri, ct) : Task.FromResult<CodeLens[]>([]);
+
+    /// <summary>Whether running <paramref name="command"/> would reach a server, so a lens for it can be clicked.</summary>
+    public bool CanRunCommand(Command command) => lspClient.CanExecuteCommand(command.CommandName);
+
+    /// <summary>Runs a code lens's command on the server that declared it. A command nobody declares is not sent.</summary>
+    public Task RunCommandAsync(Command command, CancellationToken ct = default)
+        => lspClient.ExecuteCommandAsync(command.CommandName, command.Arguments, ct);
 
     public IReadOnlyList<string> CompletionTriggerCharacters => LiveDocumentUri is { } uri
         ? lspClient.CompletionTriggerCharacters(uri) : [];

@@ -71,6 +71,7 @@ public sealed class VBLspClient : ILspClient
     public event EventHandler<LogMessageParams>? MessageLogged;
     public event EventHandler<LogTraceParams>? TraceReceived;
     public event EventHandler? StateChanged;
+    public event EventHandler? CodeLensesRefreshRequested;
 
     private ServerIdentity? _identity;
 
@@ -610,7 +611,9 @@ public sealed class VBLspClient : ILspClient
                     ExecuteCommand: new ExecuteCommandClientCapabilities(),
                     WorkspaceFolders: true,
                     Diagnostics: new WorkspaceDiagnosticsClientCapabilities(),
-                    FileOperations: new FileOperationsClientCapabilities()),
+                    FileOperations: new FileOperationsClientCapabilities(),
+                    // The code window asks for every document's lenses again when a server asks it to.
+                    CodeLens: new CodeLensWorkspaceClientCapabilities()),
                 // The same declare-and-gate bargain as save and codeLens: silence otherwise is correct.
                 Window: new WindowClientCapabilities()));
 
@@ -1854,6 +1857,9 @@ public sealed class VBLspClient : ILspClient
         return result;
     }
 
+    public bool CanExecuteCommand(string command) =>
+        _rpc is not null && _initialized && ServerCapabilities.DeclaresCommand(AdvertisedCapabilities, command);
+
     public async Task<System.Text.Json.JsonElement?> ExecuteCommandAsync(
         string command,
         System.Text.Json.JsonElement[]? arguments = null,
@@ -2307,6 +2313,21 @@ public sealed class VBLspClient : ILspClient
         /// whether the member is absent, an empty array, or an empty object.
         /// </para>
         /// </remarks>
+        /// <summary>
+        /// The server asking for its code lenses to be asked for again — <c>workspace/codeLens/refresh</c>.
+        /// </summary>
+        /// <remarks>
+        /// Parameterless for the reason <see cref="OnDiagnosticRefresh"/> is. Answered at once: what it asks for is
+        /// done by whoever shows the lenses, which is told through <see cref="CodeLensesRefreshRequested"/>.
+        /// </remarks>
+        [JsonRpcMethod("workspace/codeLens/refresh")]
+        public void OnCodeLensRefresh()
+        {
+            _client._logger.LogDebug("The server asked for code lenses to be refreshed.");
+            try { _client.CodeLensesRefreshRequested?.Invoke(_client, EventArgs.Empty); }
+            catch (Exception ex) { _client._logger.LogDebug(ex, "A CodeLensesRefreshRequested handler threw"); }
+        }
+
         [JsonRpcMethod("workspace/diagnostic/refresh")]
         public void OnDiagnosticRefresh()
         {

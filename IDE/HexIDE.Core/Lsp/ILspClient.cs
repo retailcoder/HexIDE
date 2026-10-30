@@ -307,6 +307,18 @@ public interface ILspClient : IAsyncDisposable
         System.Text.Json.JsonElement[]? arguments = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Whether a started server declares <paramref name="command"/>, so that <see cref="ExecuteCommandAsync"/> would
+    /// send it somewhere. What the code window asks before it draws a code lens as something to click.
+    /// </summary>
+    bool CanExecuteCommand(string command) => false;
+
+    /// <summary>
+    /// Raised when a server asks for the code lenses it gave to be asked for again (<c>workspace/codeLens/refresh</c>):
+    /// something they depend on changed that is not a document, such as a test run finishing.
+    /// </summary>
+    event EventHandler? CodeLensesRefreshRequested { add { } remove { } }
+
     /// <summary>Sends vb/builtinSymbols and returns all VBA built-in function signatures, or empty.</summary>
     Task<VbaBuiltinSymbol[]> RequestBuiltinSymbolsAsync(CancellationToken cancellationToken = default);
 
