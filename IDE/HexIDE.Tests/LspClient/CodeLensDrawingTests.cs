@@ -45,7 +45,8 @@ public class CodeLensDrawingTests : IAsyncDisposable
         var header = editor.Document.GetLineByNumber(1);
         var run = editor.Document.GetLineByNumber(2);
         folds.CreateFolding(header.EndOffset, run.EndOffset).IsFolded = true;
-        generator.SetLenses([Lens(0, "Run test", "test.run")]);
+        // And one on the folded line, which is folded away with it rather than drawn on the header's row.
+        generator.SetLenses([Lens(0, "Run test", "test.run"), Lens(1, "hidden", "test.hidden")]);
 
         var line = editor.TextArea.TextView.GetOrConstructVisualLine(header);
 
