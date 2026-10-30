@@ -156,11 +156,61 @@ public class CodeEditorCodeLensTests : IDisposable
 
         TaskCompletionSource<CodeLens[]> first;
         lock (_gate) first = _lensAnswers.Single();
+        var settled = NextSettled(view);
         first.SetResult([Lens(4, "older")]);
-        await Task.Yield();
-        Dispatcher.UIThread.RunJobs();
 
-        LensesOf(view).At(5).Select(c => c.Title).Should().Equal(["newer"], "the attach's answer arrived last, and is older");
+        (await settled).Should().BeFalse("the attach's answer arrived last, and is not the latest");
+        LensesOf(view).At(5).Select(c => c.Title).Should().Equal(["newer"]);
+    }
+
+    [AvaloniaFact]
+    public async Task AnAnswerToTheTextBeforeAnEditIsNotDrawn()
+    {
+        _answer = number =>
+        {
+            var pending = new TaskCompletionSource<CodeLens[]>(TaskCreationOptions.RunContinuationsAsynchronously);
+            lock (_gate) _lensAnswers.Add(pending);
+            return pending.Task;
+        };
+        using var vm = MakeViewModel();
+        vm.Initialize(AModule());
+        var view = Show(vm);
+        await NextLensRequest();
+
+        // The text changes while the server is still working out its answer to the text before.
+        vm.Document.Insert(vm.Document.GetLineByNumber(2).Offset, "' a note\r\n");
+        TaskCompletionSource<CodeLens[]> beforeTheEdit;
+        lock (_gate) beforeTheEdit = _lensAnswers[0];
+        var settled = NextSettled(view);
+        beforeTheEdit.SetResult([Lens(4, "stale")]);
+
+        (await settled).Should().BeFalse("it describes lines the edit has moved");
+        LensesOf(view).At(5).Should().BeEmpty();
+    }
+
+    // The next lens answer the view deals with: whether it was drawn.
+    private static Task<bool> NextSettled(CodeEditorView view)
+    {
+        var settled = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        void OnSettled(bool drawn)
+        {
+            view.LensAnswerSettled -= OnSettled;
+            settled.TrySetResult(drawn);
+        }
+        view.LensAnswerSettled += OnSettled;
+        return PumpUntil(settled.Task);
+    }
+
+    // The answer's continuation comes back through the dispatcher, which a headless test pumps itself.
+    private static async Task<T> PumpUntil<T>(Task<T> task)
+    {
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+        while (!task.IsCompleted && DateTime.UtcNow < deadline)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(10, Token);
+        }
+        return await task.WaitAsync(TimeSpan.FromSeconds(1), Token);
     }
 
     [AvaloniaFact]
@@ -179,13 +229,15 @@ public class CodeEditorCodeLensTests : IDisposable
         LensesOf(view).At(2).Select(c => c.Title).Should().Equal(["above"]);
         LensesOf(view).At(5).Should().BeEmpty("the edit moved it, so it waits for the next answer");
 
+        // The edit's own settle asks again first; its answer is let through, then the failing one.
+        await NextLensRequest();
+        await PumpUntil(Task.FromResult(true));
         _answer = _ => Task.FromException<CodeLens[]>(new InvalidOperationException("the server fell over"));
+        var settled = NextSettled(view);
         _lspClient.CodeLensesRefreshRequested += Raise.Event();
         Dispatcher.UIThread.RunJobs();
-        await NextLensRequest();
-        await Task.Yield();
-        Dispatcher.UIThread.RunJobs();
 
+        (await settled).Should().BeTrue("a failed request is dealt with as an answer of nothing");
         LensesOf(view).At(2).Should().BeEmpty("a request that failed offers nothing, so nothing old is left to click");
     }
 

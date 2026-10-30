@@ -1217,18 +1217,32 @@ public partial class CodeEditorView : UserControl
 
         await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
         {
-            if (token.IsCancellationRequested || version != _lensVersion
-                || !ReferenceEquals(lenses, _lenses) || !ReferenceEquals(DataContext, vm)) return;
-            lenses.SetLenses(result);
-            TextEditor.TextArea.TextView.Redraw();
+            var drawn = !token.IsCancellationRequested && version == _lensVersion
+                        && ReferenceEquals(lenses, _lenses) && ReferenceEquals(DataContext, vm);
+            if (drawn)
+            {
+                lenses.SetLenses(result);
+                TextEditor.TextArea.TextView.Redraw();
+            }
+            LensAnswerSettled?.Invoke(drawn);
         });
     }
 
+    /// <summary>
+    /// Raised on the UI thread once each lens answer has been dealt with: true when it was drawn, false when it was
+    /// discarded as no longer the latest. What a test of the ordering waits on, rather than on time.
+    /// </summary>
+    internal event Action<bool>? LensAnswerSettled;
+
     // An edit moves every line below it, so the lenses from the edited line down are dropped at once rather than left to
-    // run their old arguments on the wrong lines until the next answer, which the edit's own settle asks for.
+    // run their old arguments on the wrong lines until the next answer, which the edit's own settle asks for. An answer
+    // already on its way describes the text before the edit, so it is no longer the latest: the edit takes a number of
+    // its own, and a pending refresh is called off.
     private void OnDocumentChangedForLenses(object? sender, DocumentChangeEventArgs e)
     {
         if (_lenses is not { } lenses || sender is not TextDocument document) return;
+        _lensVersion++;
+        _lensCts?.Cancel();
         var line = document.GetLineByOffset(Math.Min(e.Offset, document.TextLength)).LineNumber;
         if (lenses.DropFrom(line)) TextEditor.TextArea.TextView.Redraw();
     }
