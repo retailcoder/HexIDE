@@ -183,6 +183,17 @@ public class HoverCardTests
     }
 
     [AvaloniaFact]
+    public void A_cut_never_splits_a_character_in_two()
+    {
+        // A character outside the BMP straddling the cut: its first half is the last one that would fit.
+        var straddling = new string('a', HoverMarkdown.MaxLength - 1) + "😀" + "tail";
+        var parsed = HoverMarkdown.Parse(new MarkupContent("plaintext", straddling));
+
+        parsed.Text.Should().Be(new string('a', HoverMarkdown.MaxLength - 1) + "…");
+        parsed.Text.Any(char.IsSurrogate).Should().BeFalse();
+    }
+
+    [AvaloniaFact]
     public void Pressing_a_link_in_a_hover_does_nothing()
     {
         var card = HoverCard.Build([], Markdown("[run](command:x.run) and [page](https://example.invalid)"), Code)!;

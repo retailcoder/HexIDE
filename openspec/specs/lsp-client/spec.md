@@ -134,7 +134,7 @@ be preserved.
 ### Requirement: Hovers SHALL be drawn as their kind says
 The client SHALL ask for Markdown hovers before plain text ones. The editor SHALL draw a Markdown hover as
 formatted text — paragraphs, emphasis, inline and fenced code, links, lists, quotes, headings and rules — and a
-plain-text hover exactly as it came, never parsed. Code fenced as `vb`, `vb6` or `vba` SHALL be coloured by the code
+plain-text hover as it came, never parsed, up to the length every hover is cut at. Code fenced as `vb`, `vb6` or `vba` SHALL be coloured by the code
 window's syntax highlighting; a server's semantic colours are not applied to it. Raw HTML in a hover SHALL be shown as
 text and never applied, an image SHALL be shown as its alternative text and never fetched, and a link SHALL be drawn as
 a link without being followed. The hover card's colours SHALL be theme keys. Whatever a server sends, the card SHALL

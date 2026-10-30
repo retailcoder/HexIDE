@@ -63,13 +63,21 @@ internal static class HoverMarkdown
 
     private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().DisableHtml().Build();
 
+    // At MaxLength, and never between the two halves of a surrogate pair, which would leave half a character on show.
+    internal static string Cut(string value)
+    {
+        if (value.Length <= MaxLength) return value;
+        var at = char.IsHighSurrogate(value[MaxLength - 1]) ? MaxLength - 1 : MaxLength;
+        return value[..at] + "…";
+    }
+
     /// <summary>A hover read and ready to draw: its text, cut to length, and the parsed document when it is Markdown.</summary>
     internal sealed record ParsedHover(string Text, MarkdownDocument? Document);
 
     /// <summary>Reads a hover. Touches no control, so it can run on whichever thread the answer arrived on.</summary>
     public static ParsedHover Parse(MarkupContent content)
     {
-        var text = content.Value.Length <= MaxLength ? content.Value : content.Value[..MaxLength] + "…";
+        var text = Cut(content.Value);
         if (!string.Equals(content.Kind, "markdown", StringComparison.Ordinal)) return new ParsedHover(text, null);
 
         try

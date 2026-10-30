@@ -99,11 +99,12 @@ the subset hovers use is drawn as such: paragraphs, emphasis, inline and fenced 
 and rules. A `vb`, `vb6` or `vba` fence is coloured by the code window's syntax highlighting (its definition's
 keyword, string and comment colours; a server's semantic tokens are not applied to a hover). Raw HTML is shown as text,
 an image as its alternative text (never fetched), and a link is drawn but not followed, since the card is a tooltip
-and cannot be clicked. Plain text is shown as it came. The card is the editor's own `ToolTip`, coloured by the theme's
+and cannot be clicked. Plain text is shown as it came, up to the cut below. The card is the editor's own `ToolTip`, coloured by the theme's
 `Hover*` keys; the automation `hover` tool reads it as it reads any tip that is a control, its text blocks joined
 with ` / `.
 
-**Bounded, whatever a server sends.** The text is cut at 20,000 characters, the cut marked. Nesting deeper than 16
+**Bounded, whatever a server sends.** The text is cut at 20,000 characters, never between the two halves of a surrogate
+pair, and the cut is marked with "…". Nesting deeper than 16
 levels is shown as its source text, and input Markdig itself refuses for its depth is shown as plain text, so no reply
 can overflow the stack. The card is at most 360 pixels tall: what is taller is cut, with a "…" line below it. It does
 not scroll, since a tooltip closes as the pointer moves to it and takes no wheel. The Markdown is parsed on a pool
