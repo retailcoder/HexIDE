@@ -134,10 +134,12 @@ be preserved.
 ### Requirement: Hovers SHALL be drawn as their kind says
 The client SHALL ask for Markdown hovers before plain text ones. The editor SHALL draw a Markdown hover as
 formatted text — paragraphs, emphasis, inline and fenced code, links, lists, quotes, headings and rules — and a
-plain-text hover exactly as it came, never parsed. Code fenced as `vb`, `vb6` or `vba` SHALL be coloured as the
-code window colours it. Raw HTML in a hover SHALL be shown as text and never applied, an image SHALL be shown as its
-alternative text and never fetched, and a link SHALL be drawn as a link without being followed. The hover card's
-colours SHALL be theme keys.
+plain-text hover exactly as it came, never parsed. Code fenced as `vb`, `vb6` or `vba` SHALL be coloured by the code
+window's syntax highlighting; a server's semantic colours are not applied to it. Raw HTML in a hover SHALL be shown as
+text and never applied, an image SHALL be shown as its alternative text and never fetched, and a link SHALL be drawn as
+a link without being followed. The hover card's colours SHALL be theme keys. Whatever a server sends, the card SHALL
+stay bounded: its text cut at a length, nesting past a depth shown as text, and its height capped, with what is longer
+scrolling within it.
 
 A hover opens when the pointer settles, so nothing in it may reach out of the IDE, and a tooltip cannot be clicked,
 so a link in it, a `command:` link included, runs nothing.
@@ -198,11 +200,15 @@ where the same squiggle as an error reads as "this is wrong" (hexide-io/HexIDE#4
 ### Requirement: Code lenses SHALL be drawn and run from the code window
 The code window SHALL draw each resolved code lens after the line it starts on, taking no place in the document, and
 a click on one SHALL run its command on the server that declared it. A lens whose command no started server declares
-SHALL be drawn as text that does nothing when clicked. The client SHALL declare `workspace.codeLens.refreshSupport`,
-and a `workspace/codeLens/refresh` SHALL have every open code window ask for its lenses again.
+SHALL be drawn as text that does nothing when clicked. A lens on a header whose attribute run is folded SHALL be drawn
+on the header, and a lens on a line folded away SHALL be folded away with it. Lenses SHALL be asked for when the code
+window opens. The client SHALL declare `workspace.codeLens.refreshSupport`, and a `workspace/codeLens/refresh` SHALL have
+every open code window ask for its lenses again, and only its lenses. An edit SHALL drop the lenses from its line down
+until the next answer, and only the latest answer SHALL be drawn.
 
 A lens is an offer, and an offer that cannot be taken up is worse than none: clicking something that does nothing
-reads as a fault. So what is drawn as clickable is exactly what would reach a server.
+reads as a fault. So what is drawn as clickable is exactly what would reach a server, and a lens left on a line an edit
+has moved would offer its old arguments on the wrong line.
 
 #### Scenario: A server offers a lens
 - **WHEN** a server returns a lens with a command it declares, on a procedure's first line
@@ -214,7 +220,15 @@ reads as a fault. So what is drawn as clickable is exactly what would reach a se
 
 #### Scenario: The server asks for its lenses again
 - **WHEN** a server sends `workspace/codeLens/refresh`
-- **THEN** it is answered, and the open code windows ask for their lenses again
+- **THEN** it is answered, and the open code windows ask for their lenses again, and not for their folds or tokens
+
+#### Scenario: A member with Attribute lines
+- **WHEN** a server offers a lens on the header of a member whose attribute run is folded, as it is by default
+- **THEN** the lens is drawn on the header
+
+#### Scenario: An edit above a lens
+- **WHEN** the user edits a line above a lens
+- **THEN** the lens is no longer drawn until the server's next answer places it
 
 ### Requirement: Documents SHALL be synchronized in full
 The client SHALL send the entire document text on open and on every change, rather than a delta, and SHALL

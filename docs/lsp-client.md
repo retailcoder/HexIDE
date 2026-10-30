@@ -96,10 +96,17 @@ content, with blank lines between array parts; `MarkupContent` keeps its kind an
 The client declares `hover.contentFormat: ["markdown", "plaintext"]`, and the code window's hover card draws what
 comes back by its kind (`HoverMarkdown`). Markdown is parsed with Markdig, with its HTML extension never enabled, and
 the subset hovers use is drawn as such: paragraphs, emphasis, inline and fenced code, links, lists, quotes, headings
-and rules. A `vb`, `vb6` or `vba` fence is coloured by the code window's own highlighting. Raw HTML is shown as text,
+and rules. A `vb`, `vb6` or `vba` fence is coloured by the code window's syntax highlighting (its definition's
+keyword, string and comment colours; a server's semantic tokens are not applied to a hover). Raw HTML is shown as text,
 an image as its alternative text (never fetched), and a link is drawn but not followed, since the card is a tooltip
 and cannot be clicked. Plain text is shown as it came. The card is the editor's own `ToolTip`, coloured by the theme's
-`Hover*` keys, so the automation `hover` tool reads it as before.
+`Hover*` keys; the automation `hover` tool reads it as it reads any tip that is a control, its text blocks joined
+with ` / `.
+
+**Bounded, whatever a server sends.** The text is cut at 20,000 characters, the cut marked. Nesting deeper than 16
+levels is shown as its source text, and input Markdig itself refuses for its depth is shown as plain text, so no reply
+can overflow the stack. The card scrolls within 360 pixels. The Markdown is parsed on a pool thread and drawn on the UI
+thread.
 
 `initialize.locale` carries the resolved Options → Language UI language as a BCP 47 tag.
 System default uses the localization service's system resolution; pseudo-locales send `en`.
@@ -975,9 +982,18 @@ two genuinely different things, and dropping either would hide something the use
 **The code window draws them after the line each starts on** (`CodeLensGenerator`), dimmed in the read-only
 colour and separated by `|`. They take no place in the document, so the caret, the selection and edits never meet
 them. The text view has no line of its own to put between two document lines, and faking one would move every line
-below it, so they follow the text rather than sit above it. They are asked for with the folds and the semantic
-tokens: when the window opens, after an edit settles, when a server's state changes, and when a server sends
-`workspace/codeLens/refresh` (declared as `workspace.codeLens.refreshSupport`).
+below it, so they follow the text rather than sit above it. A lens belongs to the line it starts on: on a member
+whose attribute run is folded under its header, as every one is by default, the header's lens is drawn before the
+fold, and a lens on a line folded away is folded away with it.
+
+**When they are asked for.** With the folds and the semantic tokens: when the window opens, after an edit settles, and
+when a server's state changes. A server's `workspace/codeLens/refresh` (declared as
+`workspace.codeLens.refreshSupport`) asks for the lenses alone, on a settle of their own, so a server that refreshes
+often cannot hold up the folds or the tokens. Each request is numbered, and only the latest answer is drawn.
+
+**They are never stale.** An edit drops the lenses from its line down until the next answer, since every line below
+has moved and an old lens would run its old arguments on the wrong line. A request that fails clears them, and a press
+asks again whether its command would run, so a stopped server's lens does nothing.
 
 **A lens is clickable only when its command would run.** Clicking runs it on the server that declared it, by the
 rule above. A lens whose command no started server declares is drawn as text, since clicking it would do nothing,
