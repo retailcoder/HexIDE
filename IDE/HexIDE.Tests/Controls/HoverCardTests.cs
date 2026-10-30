@@ -153,7 +153,7 @@ public class HoverCardTests
     }
 
     [AvaloniaFact]
-    public void A_reply_longer_than_any_card_is_cut_and_scrolls_within_a_height()
+    public void A_reply_longer_than_any_card_is_cut_at_a_height_and_the_cut_is_shown()
     {
         var huge = string.Concat(Enumerable.Repeat("word ", 10_000));
         var parsed = HoverMarkdown.Parse(new MarkupContent("plaintext", huge));
@@ -161,8 +161,25 @@ public class HoverCardTests
         parsed.Text.Should().EndWith("…");
 
         var card = HoverCard.Build([], parsed, Code)!;
-        var scroller = card.GetLogicalDescendants().OfType<ScrollViewer>().Should().ContainSingle().Subject;
-        scroller.MaxHeight.Should().Be(HoverCard.MaxHeight);
+        card.GetLogicalDescendants().OfType<ScrollViewer>().Should().BeEmpty("a tooltip takes no wheel, so a scroller in it is out of reach");
+        var cut = card.Content.Should().BeOfType<CutAtHeight>().Subject;
+        cut.Measure(new Avalonia.Size(HoverCard.MaxWidth, double.PositiveInfinity));
+
+        cut.IsCut.Should().BeTrue();
+        cut.DesiredSize.Height.Should().Be(HoverCard.MaxHeight);
+        cut.Children.OfType<TextBlock>().Single().Text.Should().Be(CutAtHeight.Marker);
+    }
+
+    [AvaloniaFact]
+    public void A_card_that_fits_is_not_cut_and_says_nothing_more()
+    {
+        var card = HoverCard.Build([], new MarkupContent("plaintext", "Dim x As Long"), Code)!;
+        var cut = card.Content.Should().BeOfType<CutAtHeight>().Subject;
+        cut.Measure(new Avalonia.Size(HoverCard.MaxWidth, double.PositiveInfinity));
+
+        cut.IsCut.Should().BeFalse();
+        cut.DesiredSize.Height.Should().BeLessThan(HoverCard.MaxHeight);
+        TextOf(card).Should().Be("Dim x As Long", "the marker is empty, so a reader of the card sees only the reply");
     }
 
     [AvaloniaFact]

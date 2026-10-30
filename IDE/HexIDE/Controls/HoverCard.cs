@@ -26,7 +26,10 @@ internal static class HoverCard
     /// <summary>The widest a card grows before its text wraps.</summary>
     internal const double MaxWidth = 560;
 
-    /// <summary>The tallest a card grows; what is longer scrolls inside it.</summary>
+    /// <summary>
+    /// The tallest a card grows. What is longer is cut, with a "…" line to say so: the card is a tooltip, which closes as
+    /// the pointer moves to it and takes no wheel, so there is nothing to scroll with.
+    /// </summary>
     internal const double MaxHeight = 360;
 
     /// <summary>The card for these diagnostics and this quick info, or null when there is nothing to show.</summary>
@@ -67,18 +70,66 @@ internal static class HoverCard
 
         if (sections.Children.Count == 0) return null;
 
-        // However much a server says, the card stays a card: what does not fit scrolls rather than filling the screen.
-        var content = new ScrollViewer
-        {
-            Content = sections,
-            MaxHeight = MaxHeight,
-            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
-            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
-        };
-        var tip = new ToolTip { Content = content, BorderThickness = new Thickness(1), Padding = new Thickness(8, 6) };
+        // However much a server says, the card stays a card: what does not fit is cut, and the cut is shown.
+        var tip = new ToolTip { Content = new CutAtHeight(sections, MaxHeight), BorderThickness = new Thickness(1), Padding = new Thickness(8, 6) };
         tip.Bind(TemplatedControl.BackgroundProperty, tip.GetResourceObservable(BackgroundKey));
         tip.Bind(TemplatedControl.ForegroundProperty, tip.GetResourceObservable(ForegroundKey));
         tip.Bind(TemplatedControl.BorderBrushProperty, tip.GetResourceObservable(BorderKey));
         return tip;
+    }
+}
+
+/// <summary>
+/// Shows its content up to a height, and below it a "…" line when the content is taller and has been cut.
+/// </summary>
+/// <remarks>
+/// The marker's text is empty while nothing is cut, so a reader of the card's text blocks, the automation hover tool
+/// among them, sees the content and nothing else.
+/// </remarks>
+internal sealed class CutAtHeight : Panel
+{
+    internal const string Marker = "…";
+
+    private readonly Border _clip;
+    private readonly TextBlock _marker = new();
+    private readonly double _maxHeight;
+
+    public CutAtHeight(Control content, double maxHeight)
+    {
+        _maxHeight = maxHeight;
+        _clip = new Border { ClipToBounds = true, Child = content };
+        Children.Add(_clip);
+        Children.Add(_marker);
+    }
+
+    /// <summary>Whether the content was taller than the height, and so is cut.</summary>
+    public bool IsCut { get; private set; }
+
+    private double MarkerHeight => _marker.FontSize * 1.4;
+
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        _clip.Measure(new Size(availableSize.Width, double.PositiveInfinity));
+        var content = _clip.DesiredSize;
+        IsCut = content.Height > _maxHeight;
+        var marker = IsCut ? Marker : string.Empty;
+        if (_marker.Text != marker) _marker.Text = marker;
+        _marker.Measure(new Size(availableSize.Width, MarkerHeight));
+        return IsCut ? new Size(content.Width, _maxHeight) : content;
+    }
+
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        if (!IsCut)
+        {
+            _clip.Arrange(new Rect(finalSize));
+            _marker.Arrange(new Rect(0, finalSize.Height, finalSize.Width, 0));
+            return finalSize;
+        }
+
+        var shown = Math.Max(0, finalSize.Height - MarkerHeight);
+        _clip.Arrange(new Rect(0, 0, finalSize.Width, shown));
+        _marker.Arrange(new Rect(0, shown, finalSize.Width, MarkerHeight));
+        return finalSize;
     }
 }

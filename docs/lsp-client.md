@@ -105,8 +105,9 @@ with ` / `.
 
 **Bounded, whatever a server sends.** The text is cut at 20,000 characters, the cut marked. Nesting deeper than 16
 levels is shown as its source text, and input Markdig itself refuses for its depth is shown as plain text, so no reply
-can overflow the stack. The card scrolls within 360 pixels. The Markdown is parsed on a pool thread and drawn on the UI
-thread.
+can overflow the stack. The card is at most 360 pixels tall: what is taller is cut, with a "…" line below it. It does
+not scroll, since a tooltip closes as the pointer moves to it and takes no wheel. The Markdown is parsed on a pool
+thread and drawn on the UI thread.
 
 `initialize.locale` carries the resolved Options → Language UI language as a BCP 47 tag.
 System default uses the localization service's system resolution; pseudo-locales send `en`.

@@ -138,8 +138,9 @@ plain-text hover exactly as it came, never parsed. Code fenced as `vb`, `vb6` or
 window's syntax highlighting; a server's semantic colours are not applied to it. Raw HTML in a hover SHALL be shown as
 text and never applied, an image SHALL be shown as its alternative text and never fetched, and a link SHALL be drawn as
 a link without being followed. The hover card's colours SHALL be theme keys. Whatever a server sends, the card SHALL
-stay bounded: its text cut at a length, nesting past a depth shown as text, and its height capped, with what is longer
-scrolling within it.
+stay bounded: its text cut at a length, nesting past a depth shown as text, and its height capped, with what is taller
+cut and a "…" line below it to say so. Nothing on the card scrolls: a tooltip closes as the pointer moves to it and
+takes no wheel.
 
 A hover opens when the pointer settles, so nothing in it may reach out of the IDE, and a tooltip cannot be clicked,
 so a link in it, a `command:` link included, runs nothing.
