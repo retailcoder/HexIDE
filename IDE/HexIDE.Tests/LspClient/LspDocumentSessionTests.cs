@@ -529,6 +529,35 @@ public class LspDocumentSessionTests : IDisposable
     // ── Diagnostics ───────────────────────────────────────────────────────────────────────────────────
 
     [AvaloniaFact]
+    public void ADiagnosticsTagsAndRelatedPlacesReachItsMarker_FromThePayloadThatCarriedThem()
+    {
+        var session = Session("Dim strName\nDim unused");
+        IReadOnlyList<LspMarker>? seen = null;
+        session.MarkersChanged += m => seen = m;
+        session.Start();
+        var payload = System.Text.Json.JsonSerializer.Deserialize<PublishDiagnosticsParams>(
+            """
+            {"uri":"file:///c:/proj/README.md","diagnostics":[
+              {"range":{"start":{"line":1,"character":4},"end":{"line":1,"character":10}},"message":"never used","tags":[1]},
+              {"range":{"start":{"line":0,"character":4},"end":{"line":0,"character":11}},"message":"obsolete","tags":[2],
+               "relatedInformation":[{"location":{"uri":"file:///c:/proj/Module2.bas","range":{"start":{"line":11,"character":0},"end":{"line":11,"character":3}}},"message":"first declared here"}]}
+            ]}
+            """,
+            new System.Text.Json.JsonSerializerOptions(LspJsonContext.Default.Options) { PropertyNameCaseInsensitive = true })!;
+
+        Publish(payload);
+
+        var unused = seen!.Single(m => m.Message == "never used");
+        unused.Unnecessary.Should().BeTrue();
+        unused.Deprecated.Should().BeFalse();
+        unused.Related.Should().BeNull();
+        var obsolete = seen!.Single(m => m.Message == "obsolete");
+        obsolete.Deprecated.Should().BeTrue();
+        obsolete.Unnecessary.Should().BeFalse();
+        obsolete.Related.Should().Equal("Module2.bas:12: first declared here");
+    }
+
+    [AvaloniaFact]
     public void DiagnosticsForThisDocumentBecomeMarkers()
     {
         var session = Session("hello world");
