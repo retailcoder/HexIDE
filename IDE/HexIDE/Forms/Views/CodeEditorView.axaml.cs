@@ -1432,7 +1432,7 @@ public partial class CodeEditorView : UserControl
             await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
             {
                 if (token.IsCancellationRequested) return;
-                ShowDiagnosticTip(pos, result?.Contents.Value);
+                ShowDiagnosticTip(pos, result?.Contents);
             });
         }
         catch (OperationCanceledException) { }
@@ -1442,22 +1442,20 @@ public partial class CodeEditorView : UserControl
         }
     }
 
-    private void ShowDiagnosticTip(Position pos, string? quickInfo)
+    private void ShowDiagnosticTip(Position pos, MarkupContent? quickInfo)
     {
         var offset = TextEditor.Document.GetOffset(pos.Line + 1, pos.Character + 1);
-        var parts = new List<string>();
+        var here = new List<LspMarker>();
         if (_markerService is { } service)
         {
             foreach (var marker in service.Markers)
             {
                 if (offset >= marker.StartOffset && offset < marker.EndOffset)
-                    parts.Add(string.IsNullOrEmpty(marker.Source)
-                        ? marker.Message : $"{marker.Source}: {marker.Message}");
+                    here.Add(marker);
             }
         }
-        if (!string.IsNullOrEmpty(quickInfo)) parts.Add(quickInfo);
-        if (parts.Count == 0) { CloseTip(); return; }
-        ToolTip.SetTip(TextEditor, string.Join(Environment.NewLine + Environment.NewLine, parts));
+        if (HoverCard.Build(here, quickInfo, TextEditor.FontFamily) is not { } card) { CloseTip(); return; }
+        ToolTip.SetTip(TextEditor, card);
         ToolTip.SetIsOpen(TextEditor, true);
     }
 

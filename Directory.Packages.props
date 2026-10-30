@@ -57,6 +57,11 @@
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
   </ItemGroup>
+  <!-- Markdown, for a language server's hover text. Parsed only: its HTML extension is never enabled, so a
+       server cannot put raw HTML in front of the user. -->
+  <ItemGroup>
+    <PackageVersion Include="Markdig" Version="1.4.1" />
+  </ItemGroup>
   <!-- LSP / StreamJsonRpc — Nerdbank.MessagePack pinned above 1.0.2 (GHSA-2cwq-pwfr-wcw3);
        MessagePack pinned above 2.5.198 (CVE-2026-48109 / GHSA-hv8m-jj95-wg3x) and at 2.5.303 or later
        (GHSA-qhrr-8q5h-9q3h, #1124), pulled in by StreamJsonRpc. HexIDE formats with SystemTextJsonFormatter and never

@@ -9,6 +9,11 @@
     "BracketDepth2": "#0000B0",
     "BracketDepth3": "#800080",
     "BracketUnmatched": "#B00020",
+    "HoverBackground": "#F5F5F7",
+    "HoverForeground": "#1E1E1E",
+    "HoverBorder": "#C4C4CC",
+    "HoverCodeBackground": "#FFFFFF",
+    "HoverLink": "#0B5CAD",
 
     "AppWorkspace":              "#ABABAB",
     "Window":                   "#FFFFFF",

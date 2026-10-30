@@ -576,7 +576,9 @@ public sealed class VBLspClient : ILspClient
             Capabilities: new ClientCapabilities(
                 new TextDocumentClientCapabilities(
                     PublishDiagnostics: new PublishDiagnosticsClientCapabilities(),
-                    Hover: new HoverClientCapabilities(ContentFormat: ["plaintext"]),
+                    // Markdown first, as preferred: the code window's hover card renders it (HoverMarkdown). Plain text
+                    // stays listed, and a reply marked plaintext is shown as it is, never parsed.
+                    Hover: new HoverClientCapabilities(ContentFormat: ["markdown", "plaintext"]),
                     // Claimed here so the server has something to answer. Declaring and gating are two
                     // halves of one negotiation: gate without declare and a conformant server withholds
                     // `save` because nothing asked for it, while we decline to send because it did not
