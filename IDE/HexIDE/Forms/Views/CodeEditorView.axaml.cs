@@ -40,6 +40,7 @@ public partial class CodeEditorView : UserControl
     private BracketDepthColorizer? _bracketDepthColorizer;
     private ReadOnlyRegionColorizer? _readOnlyColorizer;
     private ReadOnlyRegionLinks? _readOnlyLinks;
+    private CodeLensGenerator? _lenses;
     private ReadOnlyRegionRedraw? _readOnlyRedraw;
     private IDisposable? _readOnlyTextSub;
     private CancellationTokenSource? _hoverCts;
@@ -342,6 +343,10 @@ public partial class CodeEditorView : UserControl
             // while a member's run turns into an orphan or out of one by an edit to the line above it (task 4.1).
             _readOnlyRedraw = new ReadOnlyRegionRedraw(vm.Document, TextEditor.TextArea.TextView, () => vm.ReadOnlyRegionsNow);
 
+            // A server's code lenses, after the line each starts on; asked for with the folds below.
+            _lenses = new CodeLensGenerator(vm.CanRunCommand, command => _ = RunLensAsync(vm, command));
+            TextEditor.TextArea.TextView.ElementGenerators.Add(_lenses);
+
             InstallConditionalCompilation();
 
             _colorizer = new LspDiagnosticsColorizer(TextEditor.TextArea.TextView);
@@ -620,6 +625,11 @@ public partial class CodeEditorView : UserControl
         {
             TextEditor.TextArea.TextView.ElementGenerators.Remove(_readOnlyLinks);
             _readOnlyLinks = null;
+        }
+        if (_lenses is not null)
+        {
+            TextEditor.TextArea.TextView.ElementGenerators.Remove(_lenses);
+            _lenses = null;
         }
         _readOnlyRedraw?.Dispose();
         _readOnlyRedraw = null;
@@ -1166,9 +1176,36 @@ public partial class CodeEditorView : UserControl
         try
         {
             await Task.Delay(500, token);
-            await Task.WhenAll(RequestFoldingsAsync(vm, token), RequestSemanticTokensAsync(vm, token));
+            await Task.WhenAll(RequestFoldingsAsync(vm, token), RequestSemanticTokensAsync(vm, token), RequestCodeLensesAsync(vm, token));
         }
         catch (OperationCanceledException) { }
+    }
+
+    private async Task RequestCodeLensesAsync(CodeEditorViewModel vm, CancellationToken token)
+    {
+        var lenses = _lenses;
+        if (lenses is null) return;
+        try
+        {
+            var result = await vm.RequestCodeLensesAsync(token);
+            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (token.IsCancellationRequested || !ReferenceEquals(lenses, _lenses) || !ReferenceEquals(DataContext, vm)) return;
+                lenses.SetLenses(result);
+                TextEditor.TextArea.TextView.Redraw();
+            });
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            Log.Debug("[code lens] {ErrorMessage}", ex.Message);
+        }
+    }
+
+    private async Task RunLensAsync(CodeEditorViewModel vm, Command command)
+    {
+        try { await vm.RunCommandAsync(command); }
+        catch (Exception ex) { Log.Debug("[code lens] {Command} failed: {ErrorMessage}", command.CommandName, ex.Message); }
     }
 
     private async Task RequestSemanticTokensAsync(CodeEditorViewModel vm, CancellationToken token)

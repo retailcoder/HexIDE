@@ -372,7 +372,13 @@ public record WorkspaceClientCapabilities(
     [property: JsonPropertyName("diagnostics")]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] WorkspaceDiagnosticsClientCapabilities? Diagnostics = null,
     [property: JsonPropertyName("fileOperations")]
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FileOperationsClientCapabilities? FileOperations = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] FileOperationsClientCapabilities? FileOperations = null,
+    [property: JsonPropertyName("codeLens")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] CodeLensWorkspaceClientCapabilities? CodeLens = null);
+
+/// <summary>That the client asks for code lenses again when a server sends <c>workspace/codeLens/refresh</c>.</summary>
+public record CodeLensWorkspaceClientCapabilities(
+    [property: JsonPropertyName("refreshSupport")] bool RefreshSupport = true);
 
 public record WorkspaceDiagnosticsClientCapabilities(
     [property: JsonPropertyName("refreshSupport")] bool RefreshSupport = true);

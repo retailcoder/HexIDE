@@ -195,6 +195,27 @@ where the same squiggle as an error reads as "this is wrong" (hexide-io/HexIDE#4
 - **WHEN** a diagnostic's tags include a value the protocol does not define
 - **THEN** that value is ignored, and the diagnostic and its other tags are kept
 
+### Requirement: Code lenses SHALL be drawn and run from the code window
+The code window SHALL draw each resolved code lens after the line it starts on, taking no place in the document, and
+a click on one SHALL run its command on the server that declared it. A lens whose command no started server declares
+SHALL be drawn as text that does nothing when clicked. The client SHALL declare `workspace.codeLens.refreshSupport`,
+and a `workspace/codeLens/refresh` SHALL have every open code window ask for its lenses again.
+
+A lens is an offer, and an offer that cannot be taken up is worse than none: clicking something that does nothing
+reads as a fault. So what is drawn as clickable is exactly what would reach a server.
+
+#### Scenario: A server offers a lens
+- **WHEN** a server returns a lens with a command it declares, on a procedure's first line
+- **THEN** its title is drawn after that line, and clicking it runs the command on that server
+
+#### Scenario: Nobody declares the command
+- **WHEN** a lens's command is one no started server declares
+- **THEN** its title is drawn, and clicking it sends nothing
+
+#### Scenario: The server asks for its lenses again
+- **WHEN** a server sends `workspace/codeLens/refresh`
+- **THEN** it is answered, and the open code windows ask for their lenses again
+
 ### Requirement: Documents SHALL be synchronized in full
 The client SHALL send the entire document text on open and on every change, rather than a delta, and SHALL
 notify the server when a document closes. Each change SHALL carry a version later than the last message about
