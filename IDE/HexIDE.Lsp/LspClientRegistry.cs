@@ -630,6 +630,11 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
     public Task<CodeLens[]> RequestCodeLensesAsync(string uri, CancellationToken ct = default) =>
         GatherAsync(uri, c => c.RequestCodeLensesAsync(uri, ct));
 
+    /// <summary>Whether a started server declares the command, which is where <see cref="ExecuteCommandAsync"/> sends it.</summary>
+    public bool CanExecuteCommand(string command) =>
+        _entries.Any(e => e.Client is { IsRunning: true } client
+                          && ServerCapabilities.DeclaresCommand(client.AdvertisedCapabilities, command));
+
     /// <summary>
     /// Sends a command to the server that declared it.
     /// </summary>
@@ -645,11 +650,6 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
     /// picking a server, and the whole point of routing by declaration is that no such pick is safe.
     /// </para>
     /// </remarks>
-    /// <summary>Whether a started server declares the command, which is where <see cref="ExecuteCommandAsync"/> sends it.</summary>
-    public bool CanExecuteCommand(string command) =>
-        _entries.Any(e => e.Client is { IsRunning: true } client
-                          && ServerCapabilities.DeclaresCommand(client.AdvertisedCapabilities, command));
-
     public async Task<JsonElement?> ExecuteCommandAsync(
         string command, JsonElement[]? arguments = null, CancellationToken ct = default)
     {

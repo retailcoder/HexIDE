@@ -2313,6 +2313,16 @@ public sealed class VBLspClient : ILspClient
         /// whether the member is absent, an empty array, or an empty object.
         /// </para>
         /// </remarks>
+        [JsonRpcMethod("workspace/diagnostic/refresh")]
+        public void OnDiagnosticRefresh()
+        {
+            _client._serverRefreshesDiagnostics = true;
+            _client._logger.LogDebug("The server asked for diagnostics to be refreshed; re-requesting.");
+            _client._pullResultIds.Clear();
+            foreach (var uri in _client._openDocuments.Keys)
+                _client.PullDiagnosticsInBackground(uri);
+        }
+
         /// <summary>
         /// The server asking for its code lenses to be asked for again — <c>workspace/codeLens/refresh</c>.
         /// </summary>
@@ -2326,16 +2336,6 @@ public sealed class VBLspClient : ILspClient
             _client._logger.LogDebug("The server asked for code lenses to be refreshed.");
             try { _client.CodeLensesRefreshRequested?.Invoke(_client, EventArgs.Empty); }
             catch (Exception ex) { _client._logger.LogDebug(ex, "A CodeLensesRefreshRequested handler threw"); }
-        }
-
-        [JsonRpcMethod("workspace/diagnostic/refresh")]
-        public void OnDiagnosticRefresh()
-        {
-            _client._serverRefreshesDiagnostics = true;
-            _client._logger.LogDebug("The server asked for diagnostics to be refreshed; re-requesting.");
-            _client._pullResultIds.Clear();
-            foreach (var uri in _client._openDocuments.Keys)
-                _client.PullDiagnosticsInBackground(uri);
         }
 
         /// <summary>The counterpart, refused the same way and for the same reason.</summary>
