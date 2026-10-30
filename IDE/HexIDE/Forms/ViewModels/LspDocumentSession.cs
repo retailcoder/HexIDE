@@ -447,9 +447,25 @@ internal sealed class LspDocumentSession : IDisposable
             // A severity a server omits is an error: the protocol leaves it to the client, and treating an
             // unstated severity as a hint would hide real problems from a server that never sets it.
             var isError = diagnostic.Severity is null || diagnostic.Severity == DiagnosticSeverity.Error;
-            markers.Add(new LspMarker(startOffset, endOffset, isError, diagnostic.Message, diagnostic.Source));
+            var tags = diagnostic.Tags;
+            var related = diagnostic.RelatedInformation;
+            markers.Add(new LspMarker(startOffset, endOffset, isError, diagnostic.Message, diagnostic.Source,
+                tags.Contains(DiagnosticTag.Unnecessary), tags.Contains(DiagnosticTag.Deprecated),
+                related.Count == 0 ? null : [.. related.Select(RelatedLine)]));
         }
 
         return markers;
+    }
+
+    /// <summary>
+    /// A related location as the hover card lists it: the document's name, the line as the editor counts it, and what
+    /// the server says of it — <c>Module2.bas:12: first declared here</c>.
+    /// </summary>
+    internal static string RelatedLine(DiagnosticRelatedInformation related)
+    {
+        var name = System.Uri.TryCreate(related.Uri, UriKind.Absolute, out var uri) && uri.Segments is [.., var last]
+            ? System.Uri.UnescapeDataString(last.TrimEnd('/'))
+            : related.Uri;
+        return $"{name}:{related.Start.Line + 1}: {related.Message}";
     }
 }

@@ -159,7 +159,8 @@ so a link in it, a `command:` link included, runs nothing.
 The editor SHALL show the messages of all diagnostic markers covering the hovered offset, including
 sources when supplied, combined with any quick info for that position. Diagnostic tips SHALL be available
 in every personality, including Classic, even when Auto Quick Info is disabled. Marker ranges SHALL
-include their start and exclude their end, including ranges widened for zero-width diagnostics.
+include their start and exclude their end, including ranges widened for zero-width diagnostics. The places a
+diagnostic's related information names SHALL be listed under its message, each with its document, line and message.
 
 #### Scenario: Overlapping diagnostics and quick info
 - **WHEN** the pointer dwells over overlapping diagnostic markers and quick info is available
@@ -168,6 +169,31 @@ include their start and exclude their end, including ranges widened for zero-wid
 #### Scenario: Diagnostic without quick info
 - **WHEN** the pointer dwells over a diagnostic with no quick info or with Auto Quick Info disabled
 - **THEN** the tooltip still shows the diagnostic message
+
+#### Scenario: A diagnostic names other places
+- **WHEN** the pointer dwells over a diagnostic whose related information names a place in another module
+- **THEN** that module, the line and the server's message about it are listed under the diagnostic's message
+
+### Requirement: Tagged diagnostics SHALL be drawn as their tags say
+The client SHALL keep a diagnostic's `tags` and `relatedInformation` on both the push and the pull path, and SHALL
+declare `tagSupport` for `Unnecessary` and `Deprecated` and `relatedInformation`. The code window SHALL draw text a
+diagnostic tags `Unnecessary` faded, in its own colours, and text tagged `Deprecated` struck through. A tag or a related
+entry that does not read as one SHALL be skipped without losing the diagnostic.
+
+A tag changes how a diagnostic is drawn, not what it says: an unused import dimmed reads as "this does nothing",
+where the same squiggle as an error reads as "this is wrong" (hexide-io/HexIDE#453).
+
+#### Scenario: An unused import
+- **WHEN** a server reports an unused import tagged `Unnecessary`
+- **THEN** the import's text is drawn faded
+
+#### Scenario: A deprecated member
+- **WHEN** a server reports a call tagged `Deprecated`
+- **THEN** the call's text is struck through
+
+#### Scenario: A tag nobody defined
+- **WHEN** a diagnostic's tags include a value the protocol does not define
+- **THEN** that value is ignored, and the diagnostic and its other tags are kept
 
 ### Requirement: Documents SHALL be synchronized in full
 The client SHALL send the entire document text on open and on every change, rather than a delta, and SHALL

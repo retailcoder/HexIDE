@@ -124,11 +124,14 @@ public sealed class LspDiagnosticsColorizer : DocumentColorizingTransformer
         _textView.Redraw();
     }
 
+    /// <summary>How much of its colour unnecessary code keeps.</summary>
+    internal const double FadedOpacity = 0.5;
+
     protected override void ColorizeLine(DocumentLine line)
     {
         foreach (var marker in _markers)
         {
-            if (!marker.IsError)
+            if (!marker.IsError && !marker.Unnecessary && !marker.Deprecated)
                 continue;
 
             int start = Math.Max(marker.StartOffset, line.Offset);
@@ -137,10 +140,33 @@ public sealed class LspDiagnosticsColorizer : DocumentColorizingTransformer
             if (start >= end)
                 continue;
 
-            ChangeLinePart(start, end, element =>
-                element.TextRunProperties.SetForegroundBrush(Brushes.Red));
+            if (marker.IsError)
+                ChangeLinePart(start, end, element =>
+                    element.TextRunProperties.SetForegroundBrush(Brushes.Red));
+
+            // The text's own colour, faded, rather than a colour of its own: the syntax colours stay readable, and a
+            // theme needs nothing new. This runs after the syntax colourers, so the colour faded is the drawn one.
+            if (marker.Unnecessary)
+                ChangeLinePart(start, end, Fade);
+
+            if (marker.Deprecated)
+                ChangeLinePart(start, end, element =>
+                    element.TextRunProperties.SetTextDecorations(TextDecorations.Strikethrough));
         }
+    }
+
+    private static void Fade(VisualLineElement element)
+    {
+        if (element.TextRunProperties.ForegroundBrush is ISolidColorBrush solid)
+            element.TextRunProperties.SetForegroundBrush(
+                new Avalonia.Media.Immutable.ImmutableSolidColorBrush(solid.Color, solid.Opacity * FadedOpacity));
     }
 }
 
-public readonly record struct LspMarker(int StartOffset, int EndOffset, bool IsError, string Message, string? Source = null);
+/// <summary>A diagnostic as the code window draws it.</summary>
+/// <param name="Unnecessary">The server tagged it unnecessary: its text is drawn faded (hexide-io/HexIDE#453).</param>
+/// <param name="Deprecated">The server tagged it deprecated: its text is struck through.</param>
+/// <param name="Related">The other places the server says it concerns, each as one line for the hover card.</param>
+public readonly record struct LspMarker(
+    int StartOffset, int EndOffset, bool IsError, string Message, string? Source = null,
+    bool Unnecessary = false, bool Deprecated = false, IReadOnlyList<string>? Related = null);

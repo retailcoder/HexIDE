@@ -40,6 +40,11 @@ internal static class HoverCard
                 Text = string.IsNullOrEmpty(marker.Source) ? marker.Message : $"{marker.Source}: {marker.Message}",
                 TextWrapping = TextWrapping.Wrap,
             });
+
+            // The places the server says it concerns, under its message (hexide-io/HexIDE#453). Text only: the card is a
+            // tooltip, so nothing in it can be clicked to go there.
+            foreach (var related in marker.Related ?? [])
+                sections.Children.Add(new TextBlock { Text = related, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(12, -4, 0, 0) });
         }
 
         if (quickInfo is { Value.Length: > 0 } info)
