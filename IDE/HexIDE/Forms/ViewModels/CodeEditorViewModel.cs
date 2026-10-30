@@ -86,8 +86,16 @@ public partial class CodeEditorViewModel : BaseEditorWindowViewModel, ISearchabl
     /// </remarks>
     public event Action? LanguageServerStateChanged;
 
+    /// <summary>
+    /// Raised on the UI thread when a server asks for its code lenses to be asked for again
+    /// (<c>workspace/codeLens/refresh</c>). The lenses alone: the server said nothing about folds or tokens.
+    /// </summary>
+    public event Action? CodeLensesRefreshRequested;
+
     /// <summary>Held so the subscription can be dropped, and so it is only ever taken once.</summary>
     private EventHandler? languageServerStateHandler;
+
+    private EventHandler? codeLensRefreshHandler;
 
     /// <summary>
     /// The most recent diagnostics, kept so a view attaching later can catch up.
@@ -1018,15 +1026,13 @@ public partial class CodeEditorViewModel : BaseEditorWindowViewModel, ISearchabl
             languageServerStateHandler = (_, _) =>
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => LanguageServerStateChanged?.Invoke());
             lspClient.StateChanged += languageServerStateHandler;
-            // A server asking for its lenses to be asked again is, to the view, one more reason to ask.
-            lspClient.CodeLensesRefreshRequested += languageServerStateHandler;
+            codeLensRefreshHandler = (_, _) =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => CodeLensesRefreshRequested?.Invoke());
+            lspClient.CodeLensesRefreshRequested += codeLensRefreshHandler;
             AutoDispose(new ActionDisposable(() =>
             {
-                if (languageServerStateHandler is { } handler)
-                {
-                    lspClient.StateChanged -= handler;
-                    lspClient.CodeLensesRefreshRequested -= handler;
-                }
+                if (languageServerStateHandler is { } handler) lspClient.StateChanged -= handler;
+                if (codeLensRefreshHandler is { } refresh) lspClient.CodeLensesRefreshRequested -= refresh;
             }));
         }
     }

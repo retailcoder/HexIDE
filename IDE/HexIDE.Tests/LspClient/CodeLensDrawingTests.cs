@@ -35,6 +35,62 @@ public class CodeLensDrawingTests : IAsyncDisposable
     }
 
     [AvaloniaFact]
+    public void AHeadersLensIsDrawnWhenItsAttributeRunIsFolded_AndTheFoldStillCollapses()
+    {
+        // As the code window folds a member's attribute run by default: from the header's end, over the Attribute lines.
+        var (editor, window) = Editor("Public Sub Foo()\nAttribute Foo.VB_Description = \"Does foo\"\n    Debug.Print 1\nEnd Sub");
+        var folds = AvaloniaEdit.Folding.FoldingManager.Install(editor.TextArea);
+        var generator = new CodeLensGenerator(_ => true, _ => { });
+        editor.TextArea.TextView.ElementGenerators.Insert(0, generator);
+        var header = editor.Document.GetLineByNumber(1);
+        var run = editor.Document.GetLineByNumber(2);
+        folds.CreateFolding(header.EndOffset, run.EndOffset).IsFolded = true;
+        generator.SetLenses([Lens(0, "Run test", "test.run")]);
+
+        var line = editor.TextArea.TextView.GetOrConstructVisualLine(header);
+
+        line.LastDocumentLine.LineNumber.Should().Be(2, "the attribute run is folded under the header");
+        var lens = line.Elements.OfType<InlineObjectElement>().Should().ContainSingle("the header's lens is on the header").Subject;
+        ((StackPanel)lens.Element).Children.OfType<TextBlock>().Select(t => t.Text).Should().Equal("Run test");
+        line.Elements.Should().Contain(e => e.GetType().Name == "FoldingLineElement", "and the fold is built after it, still folded");
+        AvaloniaEdit.Folding.FoldingManager.Uninstall(folds);
+        window.Close();
+    }
+
+    [Fact]
+    public void AnEditDropsTheLensesFromItsLineDown()
+    {
+        var generator = new CodeLensGenerator(_ => true, _ => { });
+        generator.SetLenses([Lens(0, "first", "a"), Lens(4, "fifth", "b"), Lens(9, "tenth", "c")]);
+
+        generator.DropFrom(5).Should().BeTrue();
+        generator.DropFrom(5).Should().BeFalse("nothing is left there to drop");
+
+        generator.At(1).Select(c => c.Title).Should().Equal("first");
+        generator.At(5).Should().BeEmpty();
+        generator.At(10).Should().BeEmpty();
+    }
+
+    [AvaloniaFact]
+    public void ALensWhoseServerStoppedSinceItWasDrawnRunsNothing()
+    {
+        var running = true;
+        var ran = 0;
+        var generator = new CodeLensGenerator(_ => running, _ => ran++);
+        generator.SetLenses([Lens(0, "Run test", "test.run")]);
+        var drawn = (StackPanel)generator.Build(generator.At(1), 14);
+        var host = new Window { Content = drawn };
+        host.Show();
+        var title = drawn.Children.OfType<TextBlock>().Single();
+
+        running = false;
+
+        Press(host, title).Should().BeFalse("the press is the text's once nothing would run");
+        ran.Should().Be(0);
+        host.Close();
+    }
+
+    [AvaloniaFact]
     public void ALinesLensesFollowItsText_TakeNoPlaceInTheDocument_AndOnlyTheRunnableOnesClick()
     {
         var ran = new List<string>();

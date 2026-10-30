@@ -51,6 +51,9 @@ public partial class CodeEditorView : UserControl
     private CancellationTokenSource? _foldCts;
     private SemanticTokensColorizer? _semanticColorizer;
     private int _semanticVersion;
+    // Each lens request's number: only the latest one's answer is drawn, however late an earlier one arrives.
+    private int _lensVersion;
+    private CancellationTokenSource? _lensCts;
     private CompletionWindow? _completionWindow;
     private CancellationTokenSource? _completionCts;
     private OverloadInsightWindow? _insightWindow;
@@ -321,6 +324,7 @@ public partial class CodeEditorView : UserControl
             _watchedDocument.Changing += OnDocumentChangingForResetPrompt;
             _watchedDocument.UpdateStarted += OnDocumentUpdateStartedForFolding;
             _watchedDocument.Changing += OnDocumentChangingForFolding;
+            _watchedDocument.Changed += OnDocumentChangedForLenses;
 
             // Attach LSP text marker service (squiggles) and diagnostics colorizer (red text)
             _markerService = new LspTextMarkerService(TextEditor);
@@ -343,16 +347,13 @@ public partial class CodeEditorView : UserControl
             // while a member's run turns into an orphan or out of one by an edit to the line above it (task 4.1).
             _readOnlyRedraw = new ReadOnlyRegionRedraw(vm.Document, TextEditor.TextArea.TextView, () => vm.ReadOnlyRegionsNow);
 
-            // A server's code lenses, after the line each starts on; asked for with the folds below.
-            _lenses = new CodeLensGenerator(vm.CanRunCommand, command => _ = RunLensAsync(vm, command));
-            TextEditor.TextArea.TextView.ElementGenerators.Add(_lenses);
-
             InstallConditionalCompilation();
 
             _colorizer = new LspDiagnosticsColorizer(TextEditor.TextArea.TextView);
             TextEditor.TextArea.TextView.LineTransformers.Add(_colorizer);
             vm.MarkersChanged += OnMarkersChanged;
             vm.LanguageServerStateChanged += OnLanguageServerStateChanged;
+            vm.CodeLensesRefreshRequested += OnCodeLensesRefreshRequested;
 
             // Caught up rather than waiting for the next publication. A dock move detaches this view and
             // re-materialises it around fresh renderers holding nothing, and neither the language server
@@ -372,6 +373,11 @@ public partial class CodeEditorView : UserControl
             // Code folding. The header's fold and each member's attribute run's are the window's own and are in
             // place before anything is drawn; a server's folds join them when the server answers, if one ever does.
             _foldingManager = FoldingManager.Install(TextEditor.TextArea);
+            // A server's code lenses, after the line each starts on. First among the generators, ahead of the folding one
+            // just installed: a member's attribute run is folded from its header's end, which is where the header's lens
+            // goes, and the generator asked first at an offset is the one whose element is built there.
+            _lenses = new CodeLensGenerator(vm.CanRunCommand, command => _ = RunLensAsync(vm, command));
+            TextEditor.TextArea.TextView.ElementGenerators.Insert(0, _lenses);
             TextEditor.TextArea.Caret.PositionChanged += KeepCaretOffFoldedRunsEnd;
             _stickyScroll = new StickyScrollController(StickyHeaders, TextEditor, vm.Settings,
                 () => _foldingManager?.AllFoldings.Where(f =>
@@ -382,6 +388,8 @@ public partial class CodeEditorView : UserControl
                 TextEditor.TextArea.TextView.LineTransformers.IndexOf(_readOnlyColorizer), _semanticColorizer);
             _ = RequestSemanticTokensAsync(vm, CancellationToken.None);
             _ = RequestFoldingsAsync(vm, CancellationToken.None);
+            // On attach too, as tokens and folds are: a server already up answers now (#446).
+            _ = RequestCodeLensesAsync(vm, CancellationToken.None);
 
             // Bookmark gutter margin
             _bookmarkMargin = new BookmarkMargin(vm.BookmarkService, vm.Identity, vm.ToggleBookmark);
@@ -579,9 +587,14 @@ public partial class CodeEditorView : UserControl
                 _watchedDocument.Changing -= OnDocumentChangingForResetPrompt;
                 _watchedDocument.UpdateStarted -= OnDocumentUpdateStartedForFolding;
                 _watchedDocument.Changing -= OnDocumentChangingForFolding;
+                _watchedDocument.Changed -= OnDocumentChangedForLenses;
                 _watchedDocument = null;
             }
             vm.LanguageServerStateChanged -= OnLanguageServerStateChanged;
+            vm.CodeLensesRefreshRequested -= OnCodeLensesRefreshRequested;
+            _lensCts?.Cancel();
+            _lensCts?.Dispose();
+            _lensCts = null;
             if (_vmSelectionSync is not null)
             {
                 vm.PropertyChanged -= _vmSelectionSync;
@@ -1185,21 +1198,60 @@ public partial class CodeEditorView : UserControl
     {
         var lenses = _lenses;
         if (lenses is null) return;
+        var version = ++_lensVersion;
+        CodeLens[] result;
         try
         {
-            var result = await vm.RequestCodeLensesAsync(token);
-            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                if (token.IsCancellationRequested || !ReferenceEquals(lenses, _lenses) || !ReferenceEquals(DataContext, vm)) return;
-                lenses.SetLenses(result);
-                TextEditor.TextArea.TextView.Redraw();
-            });
+            result = await vm.RequestCodeLensesAsync(token);
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
         catch (Exception ex)
         {
+            // A request that failed has no lenses to offer: the ones drawn are from an answer it would have replaced.
             Log.Debug("[code lens] {ErrorMessage}", ex.Message);
+            result = [];
         }
+
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (token.IsCancellationRequested || version != _lensVersion
+                || !ReferenceEquals(lenses, _lenses) || !ReferenceEquals(DataContext, vm)) return;
+            lenses.SetLenses(result);
+            TextEditor.TextArea.TextView.Redraw();
+        });
+    }
+
+    // An edit moves every line below it, so the lenses from the edited line down are dropped at once rather than left to
+    // run their old arguments on the wrong lines until the next answer, which the edit's own settle asks for.
+    private void OnDocumentChangedForLenses(object? sender, DocumentChangeEventArgs e)
+    {
+        if (_lenses is not { } lenses || sender is not TextDocument document) return;
+        var line = document.GetLineByOffset(Math.Min(e.Offset, document.TextLength)).LineNumber;
+        if (lenses.DropFrom(line)) TextEditor.TextArea.TextView.Redraw();
+    }
+
+    // A server asking for its lenses again: the lenses alone are asked, on a settle of their own. Sharing the folds' one
+    // let a server that refreshes often keep cancelling the folds and the semantic tokens, which it never asked about.
+    private void OnCodeLensesRefreshRequested()
+    {
+        if (DataContext is not CodeEditorViewModel vm) return;
+        _lensCts?.Cancel();
+        _lensCts?.Dispose();
+        _lensCts = new CancellationTokenSource();
+        _ = LensesAfterDelayAsync(vm, _lensCts.Token);
+    }
+
+    private async Task LensesAfterDelayAsync(CodeEditorViewModel vm, CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(500, token);
+            await RequestCodeLensesAsync(vm, token);
+        }
+        catch (OperationCanceledException) { }
     }
 
     private async Task RunLensAsync(CodeEditorViewModel vm, Command command)

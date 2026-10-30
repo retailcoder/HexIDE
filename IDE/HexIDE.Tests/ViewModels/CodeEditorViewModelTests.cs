@@ -715,8 +715,10 @@ public class CodeEditorViewModelTests : IDisposable
         var lens = new CodeLens(new Lsp.Messages.Range(new Position(0, 0), new Position(0, 3)), new Command("Run", "test.run"));
         _lspClient.RequestCodeLensesAsync("untitled:TestProject/Form1.frm", Arg.Any<CancellationToken>()).Returns([lens]);
         _lspClient.CanExecuteCommand("test.run").Returns(true);
-        var asked = 0;
-        vm.LanguageServerStateChanged += () => asked++;
+        var lensesAsked = 0;
+        var everythingAsked = 0;
+        vm.CodeLensesRefreshRequested += () => lensesAsked++;
+        vm.LanguageServerStateChanged += () => everythingAsked++;
 
         (await vm.RequestCodeLensesAsync()).Should().Equal(lens);
         vm.CanRunCommand(lens.Command!).Should().BeTrue();
@@ -725,7 +727,8 @@ public class CodeEditorViewModelTests : IDisposable
 
         _lspClient.CodeLensesRefreshRequested += Raise.Event();
         Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-        asked.Should().Be(1, "a server's refresh is one more reason for the view to ask again");
+        lensesAsked.Should().Be(1, "a server's refresh is a reason for the view to ask for its lenses again");
+        everythingAsked.Should().Be(0, "and for nothing else: folds and tokens are not the refresh's business");
     }
 
     [AvaloniaFact]

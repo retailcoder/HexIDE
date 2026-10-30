@@ -44,15 +44,34 @@ internal sealed class CodeLensGenerator(Func<Command, bool> canRun, Action<Comma
     /// <summary>The commands drawn after a line, 1-based as the editor counts lines.</summary>
     internal IReadOnlyList<Command> At(int lineNumber) => _byLine.TryGetValue(lineNumber, out var commands) ? commands : [];
 
+    /// <summary>
+    /// Drops the lenses from <paramref name="lineNumber"/> down: an edit there has moved every line below it, so what
+    /// they say, and the arguments they would run with, may now belong to another line. The next answer brings them back.
+    /// </summary>
+    /// <returns>Whether any were dropped, and so whether the view has anything to redraw.</returns>
+    public bool DropFrom(int lineNumber)
+    {
+        if (!_byLine.Keys.Any(line => line >= lineNumber)) return false;
+        _byLine = _byLine.Where(entry => entry.Key < lineNumber).ToDictionary(entry => entry.Key, entry => entry.Value);
+        return true;
+    }
+
+    // Keyed on the visual line's FIRST document line, which is the line a lens starts on. A collapsed fold makes one visual
+    // line of several document lines, and every member with Attribute lines is folded under its header by default: the
+    // last line is then an Attribute line, so keying on it lost the header's lens, and a collapsed procedure drew its
+    // last line's lens on the header. A line folded away has its lens folded away with it.
+    //
+    // The header's end is where its fold starts. The view installs this generator ahead of the folding generator, so at
+    // that offset the lens is built first; being of no length, it leaves the fold to be built after it.
     public override int GetFirstInterestedOffset(int startOffset)
     {
-        var line = CurrentContext.VisualLine.LastDocumentLine;
+        var line = CurrentContext.VisualLine.FirstDocumentLine;
         return _byLine.ContainsKey(line.LineNumber) && startOffset <= line.EndOffset ? line.EndOffset : -1;
     }
 
     public override VisualLineElement? ConstructElement(int offset)
     {
-        var line = CurrentContext.VisualLine.LastDocumentLine;
+        var line = CurrentContext.VisualLine.FirstDocumentLine;
         if (offset != line.EndOffset || !_byLine.TryGetValue(line.LineNumber, out var commands)) return null;
 
         // Of no length in the document: it is drawn after the line's text and is not part of it.
@@ -81,7 +100,8 @@ internal sealed class CodeLensGenerator(Func<Command, bool> canRun, Action<Comma
                 title.Cursor = new Cursor(StandardCursorType.Hand);
                 title.PointerPressed += (_, e) =>
                 {
-                    if (!e.GetCurrentPoint(title).Properties.IsLeftButtonPressed) return;
+                    // Asked again at the press: the server that declared it may have stopped since the line was drawn.
+                    if (!e.GetCurrentPoint(title).Properties.IsLeftButtonPressed || !canRun(command)) return;
                     // Handled, so the press is the lens's and not the start of a selection in the text behind it.
                     e.Handled = true;
                     run(command);
