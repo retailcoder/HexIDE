@@ -91,8 +91,15 @@ coverage of unions inside every result member.
 
 Hover replies accept `MarkupContent`, a legacy `MarkedString` (Markdown string or `{language, value}`
 code block), or an array of marked strings (#2022). Legacy forms are normalized to Markdown markup
-content, with blank lines between array parts; `MarkupContent` keeps its kind and value. The editor's
-existing tooltip displays the resulting text, including Markdown notation, without rich rendering.
+content, with blank lines between array parts; `MarkupContent` keeps its kind and value.
+
+The client declares `hover.contentFormat: ["markdown", "plaintext"]`, and the code window's hover card draws what
+comes back by its kind (`HoverMarkdown`). Markdown is parsed with Markdig, with its HTML extension never enabled, and
+the subset hovers use is drawn as such: paragraphs, emphasis, inline and fenced code, links, lists, quotes, headings
+and rules. A `vb`, `vb6` or `vba` fence is coloured by the code window's own highlighting. Raw HTML is shown as text,
+an image as its alternative text (never fetched), and a link is drawn but not followed, since the card is a tooltip
+and cannot be clicked. Plain text is shown as it came. The card is the editor's own `ToolTip`, coloured by the theme's
+`Hover*` keys, so the automation `hover` tool reads it as before.
 
 `initialize.locale` carries the resolved Options → Language UI language as a BCP 47 tag.
 System default uses the localization service's system resolution; pseudo-locales send `en`.

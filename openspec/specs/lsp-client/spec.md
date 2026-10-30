@@ -131,6 +131,29 @@ be preserved.
 - **WHEN** hover contents is an array of Markdown strings and language-tagged values
 - **THEN** the client returns their Markdown text and fenced code blocks separated by blank lines
 
+### Requirement: Hovers SHALL be drawn as their kind says
+The client SHALL ask for Markdown hovers before plain text ones. The editor SHALL draw a Markdown hover as
+formatted text — paragraphs, emphasis, inline and fenced code, links, lists, quotes, headings and rules — and a
+plain-text hover exactly as it came, never parsed. Code fenced as `vb`, `vb6` or `vba` SHALL be coloured as the
+code window colours it. Raw HTML in a hover SHALL be shown as text and never applied, an image SHALL be shown as its
+alternative text and never fetched, and a link SHALL be drawn as a link without being followed. The hover card's
+colours SHALL be theme keys.
+
+A hover opens when the pointer settles, so nothing in it may reach out of the IDE, and a tooltip cannot be clicked,
+so a link in it, a `command:` link included, runs nothing.
+
+#### Scenario: A server answers in Markdown
+- **WHEN** a hover's contents are Markdown with emphasis and a `vba` fence
+- **THEN** the emphasis is drawn as emphasis, not as asterisks, and the code in the code window's colours
+
+#### Scenario: A server answers in plain text
+- **WHEN** a hover's contents are plain text containing Markdown notation
+- **THEN** the notation is shown as written
+
+#### Scenario: A hover carries HTML or an image
+- **WHEN** a Markdown hover contains an HTML tag or an image
+- **THEN** the tag is shown as text, and the image as its alternative text, with no request made
+
 ### Requirement: Diagnostic hover messages
 
 The editor SHALL show the messages of all diagnostic markers covering the hovered offset, including
