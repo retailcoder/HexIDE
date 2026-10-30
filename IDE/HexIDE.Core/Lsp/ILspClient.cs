@@ -44,6 +44,13 @@ public interface ILspClient : IAsyncDisposable
     /// </summary>
     event EventHandler<ShowMessageParams>? MessageShown;
 
+    /// <summary>
+    /// A server asking the user to choose (<c>window/showMessageRequest</c>). A subscriber answers through
+    /// <see cref="ServerMessageRequest.Respond"/>; the connection does not wait for it, and with no answer the server is
+    /// told nothing was chosen.
+    /// </summary>
+    event EventHandler<ServerMessageRequest>? MessageRequested { add { } remove { } }
+
     /// <summary>Work-done progress; sender identifies the originating server through a registry.</summary>
     event EventHandler<ProgressParams>? ProgressReceived;
 

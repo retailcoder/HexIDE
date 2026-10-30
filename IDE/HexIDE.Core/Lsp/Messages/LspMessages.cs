@@ -1135,7 +1135,19 @@ public sealed record CancelNumericRequestParams([property: JsonPropertyName("id"
 public sealed record CancelStringRequestParams([property: JsonPropertyName("id")] string Id);
 
 public record WindowClientCapabilities(
-    [property: JsonPropertyName("workDoneProgress")] bool WorkDoneProgress = true);
+    [property: JsonPropertyName("workDoneProgress")] bool WorkDoneProgress = true,
+    [property: JsonPropertyName("showMessage")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShowMessageRequestClientCapabilities? ShowMessage = null);
+
+/// <summary>
+/// That the client answers <c>window/showMessageRequest</c>, and hands back the chosen action as the server sent it, its
+/// own members included.
+/// </summary>
+public record ShowMessageRequestClientCapabilities(
+    [property: JsonPropertyName("messageActionItem")] MessageActionItemClientCapabilities MessageActionItem);
+
+public record MessageActionItemClientCapabilities(
+    [property: JsonPropertyName("additionalPropertiesSupport")] bool AdditionalPropertiesSupport = true);
 
 public record WorkDoneProgressCreateParams(
     [property: JsonPropertyName("token")] JsonElement Token);

@@ -460,6 +460,8 @@
     "Str.Dialog.About.SigningKeys.FirstPartyKey": "First-party publisher key (SHA-256)",
     "Str.Dialog.About.Ok": "OK",
     "Str.Dialog.AddinConsent.Title": "An add-in is asking to load",
+    "Str.Dialog.ServerPrompt.Title": "{0} asks",
+    "Str.Dialog.ServerPrompt.Close": "Close",
     "Str.Dialog.AddinConsent.TrustDetails": "Trust details…",
     "Str.Dialog.AddinConsent.UnsignedWarning": "This add-in is NOT signed. Only allow it if you built it yourself and understand the risk.",
     "Str.Dialog.AddinConsent.AccessWarning": "If you allow it, this add-in runs with full access to your computer: it can read and modify your files and use the network. Only allow add-ins you trust.",

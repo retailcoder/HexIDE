@@ -221,6 +221,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.MessageLogged -= OnInnerLogMessage;
             client.TraceReceived -= OnInnerTrace;
             client.StateChanged -= OnInnerStateChanged;
+            client.MessageRequested -= OnInnerMessageRequested;
             try { await client.StopAsync(); } catch (Exception ex) { _logger.LogDebug(ex, "Stop failed for {Id}", e.Registration.Id); }
             client.ProgressReceived -= OnInnerProgress;
             e.Client = null;
@@ -846,6 +847,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.MessageLogged -= OnInnerLogMessage;
             client.TraceReceived -= OnInnerTrace;
             client.StateChanged -= OnInnerStateChanged;
+            client.MessageRequested -= OnInnerMessageRequested;
             try { await client.StopAsync(); }
             catch (Exception ex) { _logger.LogDebug(ex, "Stop failed for {Id}", e.Registration.Id); }
             client.ProgressReceived -= OnInnerProgress;
@@ -943,6 +945,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.MessageLogged += OnInnerLogMessage;
             client.TraceReceived += OnInnerTrace;
             client.StateChanged += OnInnerStateChanged;
+            client.MessageRequested += OnInnerMessageRequested;
             e.Client = client;
 
             await client.StartAsync(cancellationToken);
@@ -1012,6 +1015,18 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
         p with { ServerDisplayName = _entries.FirstOrDefault(e => ReferenceEquals(e.Client, sender))?.Registration.DisplayName });
 
     private void OnInnerMessage(object? sender, ShowMessageParams p) => MessageShown?.Invoke(this, p);
+
+    /// <summary>
+    /// A server's question, forwarded as the same request, so the answer given to it reaches that server; named first,
+    /// since whoever shows it has to say who is asking.
+    /// </summary>
+    public event EventHandler<ServerMessageRequest>? MessageRequested;
+
+    private void OnInnerMessageRequested(object? sender, ServerMessageRequest request)
+    {
+        request.ServerDisplayName ??= _entries.FirstOrDefault(e => ReferenceEquals(e.Client, sender))?.Registration.DisplayName;
+        MessageRequested?.Invoke(this, request);
+    }
 
     /// <summary>
     /// A connection came up or went away on its own — a transport closing, or a reconnect loop getting

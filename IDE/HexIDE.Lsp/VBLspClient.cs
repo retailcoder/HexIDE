@@ -71,6 +71,7 @@ public sealed class VBLspClient : ILspClient
     public event EventHandler<LogMessageParams>? MessageLogged;
     public event EventHandler<LogTraceParams>? TraceReceived;
     public event EventHandler? StateChanged;
+    public event EventHandler<ServerMessageRequest>? MessageRequested;
 
     private ServerIdentity? _identity;
 
@@ -608,7 +609,9 @@ public sealed class VBLspClient : ILspClient
                     Diagnostics: new WorkspaceDiagnosticsClientCapabilities(),
                     FileOperations: new FileOperationsClientCapabilities()),
                 // The same declare-and-gate bargain as save and codeLens: silence otherwise is correct.
-                Window: new WindowClientCapabilities()));
+                // With showMessage: a server's question is answered, with the chosen action as the server sent it.
+                Window: new WindowClientCapabilities(
+                    ShowMessage: new ShowMessageRequestClientCapabilities(new MessageActionItemClientCapabilities()))));
 
         // Deliberately received as a raw JsonElement, and interpreted separately below.
         //
@@ -2235,6 +2238,65 @@ public sealed class VBLspClient : ILspClient
         {
             _client._logger.Log(LevelOf(p.Type), "[{Language} server] {Message}", _client._languageId, p.Message);
             _client.RaiseMessageShown(p);
+        }
+
+        /// <summary>
+        /// The server asking the user to choose — <c>window/showMessageRequest</c> — answered with the action chosen, as
+        /// the server sent it, or null.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// <b>Awaited, never blocked on.</b> Whoever shows the question answers it through
+        /// <see cref="ServerMessageRequest.Respond"/>, and this waits for that answer asynchronously, so the connection
+        /// reads and dispatches everything else meanwhile: an unanswered question does not hold the server's other
+        /// messages, or the client's requests, behind it.
+        /// </para>
+        /// <para>
+        /// Read field by field, as every foreign reply is here: a message that is not a string reads as empty, and an
+        /// action without a string title is dropped. With nobody to ask, the answer is null at once, which the protocol
+        /// reads as nothing chosen. The token is the request's own, cancelled when the server withdraws it or the
+        /// connection ends.
+        /// </para>
+        /// </remarks>
+        [JsonRpcMethod("window/showMessageRequest", UseSingleObjectParameterDeserialization = true)]
+        public async Task<JsonElement?> OnShowMessageRequest(JsonElement p, CancellationToken cancellationToken)
+        {
+            var type = p.TryGetProperty("type", out var t) && t.ValueKind == JsonValueKind.Number && t.TryGetInt32(out var level)
+                ? (LspMessageType)level
+                : LspMessageType.Info;
+            var message = p.TryGetProperty("message", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() ?? "" : "";
+            var actions = new List<ServerMessageAction>();
+            if (p.TryGetProperty("actions", out var items) && items.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in items.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object
+                        && item.TryGetProperty("title", out var title) && title.ValueKind == JsonValueKind.String)
+                        actions.Add(new ServerMessageAction(title.GetString()!, item.Clone()));
+                }
+            }
+
+            _client._logger.Log(LevelOf(type), "[{Language} server] asks: {Message} ({Count} choice(s))",
+                _client._languageId, message, actions.Count);
+            var request = new ServerMessageRequest(type, message, actions, cancellationToken);
+            try { _client.MessageRequested?.Invoke(_client, request); }
+            catch (Exception ex) { _client._logger.LogDebug(ex, "A MessageRequested handler threw"); }
+
+            if (request.Answer is not { } answer) return null;
+            try
+            {
+                return (await answer.WaitAsync(cancellationToken))?.Item;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // The question still gets an answer: nothing was chosen.
+                _client._logger.LogDebug(ex, "Asking the user failed; answering that nothing was chosen.");
+                return null;
+            }
         }
 
         /// <summary>

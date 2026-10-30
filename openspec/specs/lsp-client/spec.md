@@ -1076,6 +1076,30 @@ absent from the preceding update SHALL take its default folded state.
 - **WHEN** a procedure and its attribute run share a fold start and the next answer omits the procedure fold
 - **THEN** the attribute run keeps its own folded state
 
+### Requirement: A server's question SHALL be put to the user without holding the connection
+The client SHALL declare `window.showMessage.messageActionItem.additionalPropertiesSupport` and answer
+`window/showMessageRequest` with the action the user chose, exactly as the server sent it, or null when none was chosen
+or nobody was there to ask. The IDE SHALL show the question in a window beside it, named for the server that asks, with
+a button for each choice and a Close button when there is none, and SHALL show one question at a time. The connection
+SHALL go on while a question waits. A question the server withdraws SHALL be taken away, or never shown if it is still
+waiting its turn.
+
+A question needs an answer and a status message only needs reading, so the two are shown differently: messages stay in
+the status bar. A question that held the connection until it was answered would stop the server's diagnostics, and the
+client's requests, for as long as the user took.
+
+#### Scenario: The server asks, and the user chooses
+- **WHEN** a server asks a question with two choices, one carrying a member of the server's own
+- **THEN** the question is shown with both choices, and the server receives the chosen item, its own member included
+
+#### Scenario: The question waits
+- **WHEN** a question has not been answered
+- **THEN** the server's other messages arrive and the client's requests are answered meanwhile
+
+#### Scenario: The server withdraws the question
+- **WHEN** the server cancels its request while the question is shown, or while it waits behind another
+- **THEN** the question is taken away, or never shown
+
 ### Requirement: Server work-done progress
 The client SHALL advertise `window.workDoneProgress`, accept string and integer tokens through
 `window/workDoneProgress/create` with a null result, and surface `$/progress` work-done begin/report/end

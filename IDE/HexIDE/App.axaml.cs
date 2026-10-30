@@ -78,6 +78,8 @@ public partial class App : Application
             // during the handshake, and a subscriber attached afterwards would miss exactly the message
             // that explains why nothing works.
             _ = _diSetup.LanguageServerMessages;
+            // And for the same reason: a server can ask its first question during its handshake.
+            _ = _diSetup.ServerPrompts;
 
             // Start the VB6 LSP server in the background (Desktop only).
             _ = _diSetup.LspClient.StartAsync();

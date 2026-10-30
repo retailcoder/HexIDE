@@ -974,7 +974,7 @@ specification's own [`metaModel.json`](https://raw.githubusercontent.com/microso
 the canonical machine-readable list, so the method names and directions are the specification's rather than
 this document's recollection of them.
 
-**HexIDE implements 34 of the 93.** That is not a deficiency in itself — no client implements them all, and
+**HexIDE implements 35 of the 93.** That is not a deficiency in itself — no client implements them all, and
 most of the remainder are features no VB6 IDE needs. It is here so the shape of the gap is visible rather
 than inferred.
 
@@ -1068,14 +1068,14 @@ than inferred.
 | ○ | `workspace/willRenameFiles` | → |  |
 | ○ | `workspace/workspaceFolders` | ← |  |
 
-### `window/*` — 3 of 6
+### `window/*` — 4 of 6
 
 | | Method | Dir | Notes |
 |---|---|---|---|
 | ✅ | `window/logMessage` | ← | Raised as an event **and** logged at the severity the server declared. It used to be logged only, at a level the default configuration discards |
 | ○ | `window/showDocument` | ← |  |
 | ✅ | `window/showMessage` | ← | Shown in the status bar, and logged |
-| ○ | `window/showMessageRequest` | ← |  |
+| ✅ | `window/showMessageRequest` | ← | Shown as a window beside the IDE, one at a time, with the server's choices as buttons; answered with the chosen item as sent, or null. The connection does not wait for the answer |
 | ○ | `window/workDoneProgress/cancel` | → | No cancellation UI; cancellable is not acted on |
 | ✅ | `window/workDoneProgress/create` | ← | Registers string or integer tokens; replies with null |
 

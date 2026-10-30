@@ -290,6 +290,14 @@ public partial class DISetup
             .Bind().As(Singleton).To<AddinProjectService>()
             .Bind().As(Singleton).To<AddinDiagnosticsService>()
             .Bind().As(Singleton).To<LanguageServerMessageReporter>()
+            .Bind<ServerPromptPresenter>().As(Singleton).To(ctx =>
+            {
+                // The production constructor; the other takes the UI thread as delegates, for tests.
+                ctx.Inject<ILspClient>(out var client);
+                ctx.Inject<IWindowManager>(out var windows);
+                ctx.Inject<ILocalizationService>(out var localization);
+                return new ServerPromptPresenter(client, windows, localization);
+            })
             .Bind().As(Singleton).To<AddinCommandService>()
             .Bind().As(Singleton).To<AddinProjectTemplateService>()
             .Bind().As(Singleton).To<AddinOptionsService>()
@@ -312,6 +320,7 @@ public partial class DISetup
             .Root<HexIDE.Conversations.ConversationLog>("Capture")
             .Root<HexIDE.Redaction.Pseudonymiser>("Pseudonyms")
             .Root<LanguageServerMessageReporter>("LanguageServerMessages")
+            .Root<ServerPromptPresenter>("ServerPrompts")
             .Root<IThemeService>("ThemeService")
             .Root<IKeymapService>("KeymapService")
             .Root<ILocalizationService>("LocalizationService")
