@@ -222,6 +222,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.TraceReceived -= OnInnerTrace;
             client.StateChanged -= OnInnerStateChanged;
             client.MessageRequested -= OnInnerMessageRequested;
+            client.DocumentRequested -= OnInnerDocumentRequested;
             try { await client.StopAsync(); } catch (Exception ex) { _logger.LogDebug(ex, "Stop failed for {Id}", e.Registration.Id); }
             client.ProgressReceived -= OnInnerProgress;
             e.Client = null;
@@ -848,6 +849,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.TraceReceived -= OnInnerTrace;
             client.StateChanged -= OnInnerStateChanged;
             client.MessageRequested -= OnInnerMessageRequested;
+            client.DocumentRequested -= OnInnerDocumentRequested;
             try { await client.StopAsync(); }
             catch (Exception ex) { _logger.LogDebug(ex, "Stop failed for {Id}", e.Registration.Id); }
             client.ProgressReceived -= OnInnerProgress;
@@ -946,6 +948,7 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
             client.TraceReceived += OnInnerTrace;
             client.StateChanged += OnInnerStateChanged;
             client.MessageRequested += OnInnerMessageRequested;
+            client.DocumentRequested += OnInnerDocumentRequested;
             e.Client = client;
 
             await client.StartAsync(cancellationToken);
@@ -1026,6 +1029,15 @@ public sealed class LspClientRegistry : ILspClient, ILanguageConnectionRegistry
     {
         request.ServerDisplayName ??= _entries.FirstOrDefault(e => ReferenceEquals(e.Client, sender))?.Registration.DisplayName;
         MessageRequested?.Invoke(this, request);
+    }
+
+    /// <summary>A server asking for something to be shown, forwarded as the same request and named, as a question is.</summary>
+    public event EventHandler<ServerDocumentRequest>? DocumentRequested;
+
+    private void OnInnerDocumentRequested(object? sender, ServerDocumentRequest request)
+    {
+        request.ServerDisplayName ??= _entries.FirstOrDefault(e => ReferenceEquals(e.Client, sender))?.Registration.DisplayName;
+        DocumentRequested?.Invoke(this, request);
     }
 
     /// <summary>

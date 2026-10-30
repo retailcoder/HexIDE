@@ -1100,6 +1100,27 @@ client's requests, for as long as the user took.
 - **WHEN** the server cancels its request while the question is shown, or while it waits behind another
 - **THEN** the question is taken away, or never shown
 
+### Requirement: A server SHALL be able to show a document, and SHALL ask before anything opens outside the IDE
+The client SHALL declare `window.showDocument.support` and answer `window/showDocument` with whether it was shown. A
+document of the open projects SHALL be opened in its code window, with the caret at the selection's start when one is
+given. A request with `external: true` SHALL open nothing until the user agrees, in the same queue as a server's questions,
+and SHALL be refused for anything but a web address.
+
+A server opening a document the IDE already has is navigation. Opening something outside hands it to another program,
+and for a `file:` address that program is whatever the address names, so it needs the user's word and a web address.
+
+#### Scenario: The server shows a module
+- **WHEN** a server asks to show a module of the open project at a line
+- **THEN** the module's code window opens with the caret there, and the server is told it was shown
+
+#### Scenario: The server asks to open a web page
+- **WHEN** a server asks to show a web address externally
+- **THEN** the user is asked, and the page is opened only if they agree; the server is told which
+
+#### Scenario: The server asks to open a file outside
+- **WHEN** a server asks to show a `file:` address externally
+- **THEN** nothing is opened and nothing is asked, and the server is told it was not shown
+
 ### Requirement: Server work-done progress
 The client SHALL advertise `window.workDoneProgress`, accept string and integer tokens through
 `window/workDoneProgress/create` with a null result, and surface `$/progress` work-done begin/report/end

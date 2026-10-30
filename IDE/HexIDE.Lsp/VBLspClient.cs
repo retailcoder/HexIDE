@@ -72,6 +72,7 @@ public sealed class VBLspClient : ILspClient
     public event EventHandler<LogTraceParams>? TraceReceived;
     public event EventHandler? StateChanged;
     public event EventHandler<ServerMessageRequest>? MessageRequested;
+    public event EventHandler<ServerDocumentRequest>? DocumentRequested;
 
     private ServerIdentity? _identity;
 
@@ -611,7 +612,10 @@ public sealed class VBLspClient : ILspClient
                 // The same declare-and-gate bargain as save and codeLens: silence otherwise is correct.
                 // With showMessage: a server's question is answered, with the chosen action as the server sent it.
                 Window: new WindowClientCapabilities(
-                    ShowMessage: new ShowMessageRequestClientCapabilities(new MessageActionItemClientCapabilities()))));
+                    ShowMessage: new ShowMessageRequestClientCapabilities(new MessageActionItemClientCapabilities()),
+                    // And showDocument: a document the IDE has is opened in it; an address outside it is opened only once
+                    // the user agrees.
+                    ShowDocument: new ShowDocumentClientCapabilities())));
 
         // Deliberately received as a raw JsonElement, and interpreted separately below.
         //
@@ -2297,6 +2301,56 @@ public sealed class VBLspClient : ILspClient
                 _client._logger.LogDebug(ex, "Asking the user failed; answering that nothing was chosen.");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// The server asking for a document or an address to be shown — <c>window/showDocument</c> — answered with
+        /// whether it was.
+        /// </summary>
+        /// <remarks>
+        /// Awaited without blocking, as <see cref="OnShowMessageRequest"/> is: opening something outside the IDE asks the
+        /// user first, and the connection goes on while they decide. A request with no string <c>uri</c> is answered as
+        /// not shown. The reply is built as JSON, so nothing new needs registering with the serializer context.
+        /// </remarks>
+        [JsonRpcMethod("window/showDocument", UseSingleObjectParameterDeserialization = true)]
+        public async Task<JsonElement> OnShowDocument(JsonElement p, CancellationToken cancellationToken)
+        {
+            var shown = false;
+            if (p.TryGetProperty("uri", out var u) && u.ValueKind == JsonValueKind.String && u.GetString() is { Length: > 0 } uri)
+            {
+                var external = p.TryGetProperty("external", out var e) && e.ValueKind == JsonValueKind.True;
+                var takeFocus = p.TryGetProperty("takeFocus", out var f) && f.ValueKind == JsonValueKind.True;
+                Position? start = p.TryGetProperty("selection", out var selection) && selection.ValueKind == JsonValueKind.Object
+                                  && selection.TryGetProperty("start", out var s) && s.ValueKind == JsonValueKind.Object
+                                  && s.TryGetProperty("line", out var line) && line.TryGetInt32(out var lineNumber)
+                                  && s.TryGetProperty("character", out var character) && character.TryGetInt32(out var column)
+                    ? new Position(lineNumber, column)
+                    : null;
+
+                _client._logger.LogInformation("[{Language} server] asks to show {Uri}{Where}.",
+                    _client._languageId, uri, external ? " outside the IDE" : "");
+                var request = new ServerDocumentRequest(uri, external, takeFocus, start, cancellationToken);
+                try { _client.DocumentRequested?.Invoke(_client, request); }
+                catch (Exception ex) { _client._logger.LogDebug(ex, "A DocumentRequested handler threw"); }
+
+                if (request.Answer is { } answer)
+                {
+                    try
+                    {
+                        shown = await answer.WaitAsync(cancellationToken);
+                    }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _client._logger.LogDebug(ex, "Showing the document failed; answering that it was not shown.");
+                    }
+                }
+            }
+
+            return JsonDocument.Parse(shown ? """{"success":true}""" : """{"success":false}""").RootElement.Clone();
         }
 
         /// <summary>

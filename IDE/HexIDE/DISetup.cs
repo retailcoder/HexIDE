@@ -295,8 +295,9 @@ public partial class DISetup
                 // The production constructor; the other takes the UI thread as delegates, for tests.
                 ctx.Inject<ILspClient>(out var client);
                 ctx.Inject<IWindowManager>(out var windows);
+                ctx.Inject<IEditorService>(out var editor);
                 ctx.Inject<ILocalizationService>(out var localization);
-                return new ServerPromptPresenter(client, windows, localization);
+                return new ServerPromptPresenter(client, windows, editor, localization);
             })
             .Bind().As(Singleton).To<AddinCommandService>()
             .Bind().As(Singleton).To<AddinProjectTemplateService>()

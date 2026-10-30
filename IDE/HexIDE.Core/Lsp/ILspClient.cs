@@ -51,6 +51,12 @@ public interface ILspClient : IAsyncDisposable
     /// </summary>
     event EventHandler<ServerMessageRequest>? MessageRequested { add { } remove { } }
 
+    /// <summary>
+    /// A server asking for a document or an address to be shown (<c>window/showDocument</c>). A subscriber answers through
+    /// <see cref="ServerDocumentRequest.Respond"/>; with no answer the server is told it was not shown.
+    /// </summary>
+    event EventHandler<ServerDocumentRequest>? DocumentRequested { add { } remove { } }
+
     /// <summary>Work-done progress; sender identifies the originating server through a registry.</summary>
     event EventHandler<ProgressParams>? ProgressReceived;
 

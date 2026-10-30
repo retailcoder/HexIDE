@@ -183,8 +183,10 @@ public class ServerPromptTests : IAsyncDisposable
         }
     }
 
-    private static ServerPromptPresenter Presenter(ILspClient client, Windows windows) =>
-        new(client, windows.Manager, Localization(), work => work(), action => action());
+    private static ServerPromptPresenter Presenter(
+        ILspClient client, Windows windows, IEditorService? editor = null, Func<Uri, Task<bool>>? launch = null) =>
+        new(client, windows.Manager, editor ?? Substitute.For<IEditorService>(), Localization(), work => work(), action => action(),
+            launch ?? (_ => Task.FromResult(false)));
 
     /// <summary>The token of a question its server never withdraws.</summary>
     private static readonly CancellationToken NeverWithdrawn = new CancellationTokenSource().Token;
@@ -252,6 +254,130 @@ public class ServerPromptTests : IAsyncDisposable
         var anonymous = new ServerPromptDialogViewModel(
             new ServerMessageRequest(LspMessageType.Info, "?", [], NeverWithdrawn), Localization());
         anonymous.Title.Should().Be("Language server asks");
+    }
+
+    // ── window/showDocument ──────────────────────────────────────────────────────────────────────────
+
+    [AvaloniaFact]
+    public async Task ShowDocumentIsDeclared_ReadAsSent_AndAnsweredWithWhetherItWasShown()
+    {
+        var (client, server, initialize) = await ConnectedAsync();
+        initialize.GetProperty("capabilities").GetProperty("window").GetProperty("showDocument")
+            .GetProperty("support").GetBoolean().Should().BeTrue();
+        ServerDocumentRequest? asked = null;
+        client.DocumentRequested += (_, request) =>
+        {
+            asked = request;
+            request.Respond(Task.FromResult(request.Uri.EndsWith("Module1.bas", StringComparison.Ordinal)));
+        };
+
+        var shown = await server.InvokeWithParameterObjectAsync<JsonElement>("window/showDocument",
+            new { uri = "file:///c:/p/Module1.bas", takeFocus = true, selection = new { start = new { line = 11, character = 4 }, end = new { line = 11, character = 9 } } },
+            Token).WaitAsync(TimeSpan.FromSeconds(10), Token);
+        var refused = await server.InvokeWithParameterObjectAsync<JsonElement>("window/showDocument",
+            new { uri = "https://example.invalid/docs", external = true }, Token).WaitAsync(TimeSpan.FromSeconds(10), Token);
+
+        shown.GetProperty("success").GetBoolean().Should().BeTrue();
+        refused.GetProperty("success").GetBoolean().Should().BeFalse();
+        asked!.External.Should().BeTrue();
+        server.Dispose();
+    }
+
+    [AvaloniaFact]
+    public async Task ADocumentNobodyShowsIsNotShown_AndOneWithNoAddressIsNotAskedAbout()
+    {
+        var (client, server, _) = await ConnectedAsync();
+        var raised = 0;
+
+        var unanswered = await server.InvokeWithParameterObjectAsync<JsonElement>("window/showDocument",
+            new { uri = "file:///c:/p/Module1.bas" }, Token).WaitAsync(TimeSpan.FromSeconds(10), Token);
+        client.DocumentRequested += (_, _) => raised++;
+        var nowhere = await server.InvokeWithParameterObjectAsync<JsonElement>("window/showDocument",
+            new { external = true }, Token).WaitAsync(TimeSpan.FromSeconds(10), Token);
+
+        unanswered.GetProperty("success").GetBoolean().Should().BeFalse();
+        nowhere.GetProperty("success").GetBoolean().Should().BeFalse();
+        raised.Should().Be(0);
+        server.Dispose();
+    }
+
+    [Fact]
+    public async Task TheRouterPassesTheSameDocumentRequestOn_NamedForItsServer()
+    {
+        var client = Substitute.For<ILspClient>();
+        client.IsRunning.Returns(true);
+        var router = new LspClientRegistry([new LanguageServerRegistration("rd", "RDCore", [".bas"], "vba", () => client)],
+            Substitute.For<ILogger<LspClientRegistry>>());
+        _disposables.Add(router);
+        await router.OpenDocumentAsync("file:///c:/p/M.bas", "x", Token);
+        ServerDocumentRequest? forwarded = null;
+        router.DocumentRequested += (_, r) => forwarded = r;
+        var request = new ServerDocumentRequest("file:///c:/p/M.bas", false, true, null, NeverWithdrawn);
+
+        client.DocumentRequested += Raise.Event<EventHandler<ServerDocumentRequest>>(client, request);
+
+        forwarded.Should().BeSameAs(request);
+        forwarded!.ServerDisplayName.Should().Be("RDCore");
+    }
+
+    [Fact]
+    public async Task ADocumentTheIdeHasIsOpenedWhereTheServerSays()
+    {
+        var client = Substitute.For<ILspClient>();
+        var editor = Substitute.For<IEditorService>();
+        editor.NavigateTo("file:///c:/p/Module1.bas", 12, 5).Returns(true);
+        using var presenter = Presenter(client, new Windows(), editor);
+        var request = new ServerDocumentRequest("file:///c:/p/Module1.bas", false, true, new Position(11, 4), NeverWithdrawn);
+        var unknown = new ServerDocumentRequest("file:///c:/elsewhere/X.bas", false, true, null, NeverWithdrawn);
+
+        client.DocumentRequested += Raise.Event<EventHandler<ServerDocumentRequest>>(client, request);
+        client.DocumentRequested += Raise.Event<EventHandler<ServerDocumentRequest>>(client, unknown);
+
+        (await request.Answer!.WaitAsync(TimeSpan.FromSeconds(10), Token)).Should().BeTrue();
+        (await unknown.Answer!.WaitAsync(TimeSpan.FromSeconds(10), Token)).Should().BeFalse("nothing loaded answers to it");
+        editor.Received(1).NavigateTo("file:///c:/elsewhere/X.bas", 1, 1);
+    }
+
+    [Theory]
+    [InlineData(MessageBoxResult.Yes, true)]
+    [InlineData(MessageBoxResult.No, false)]
+    public async Task AnAddressOutsideIsOpenedOnlyOnceTheUserAgrees(MessageBoxResult answer, bool opened)
+    {
+        var client = Substitute.For<ILspClient>();
+        var windows = new Windows();
+        windows.Manager.MessageBox(Arg.Any<string>(), Arg.Any<string?>(), MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+            Arg.Any<Avalonia.Controls.Window?>(), Arg.Any<bool>()).Returns(answer);
+        var launched = new List<Uri>();
+        var localization = Localization();
+        localization.GetString("Str.Dialog.ServerDocument.OpenExternal").Returns("{0} wants {1}");
+        using var presenter = new ServerPromptPresenter(client, windows.Manager, Substitute.For<IEditorService>(), localization,
+            work => work(), action => action(), uri => { launched.Add(uri); return Task.FromResult(true); });
+        var request = new ServerDocumentRequest("https://example.invalid/docs", true, true, null, NeverWithdrawn) { ServerDisplayName = "RDCore" };
+
+        client.DocumentRequested += Raise.Event<EventHandler<ServerDocumentRequest>>(client, request);
+
+        (await request.Answer!.WaitAsync(TimeSpan.FromSeconds(10), Token)).Should().Be(opened);
+        await windows.Manager.Received(1).MessageBox("RDCore wants https://example.invalid/docs", "RDCore asks",
+            MessageBoxButtons.YesNo, MessageBoxIcon.Question, Arg.Any<Avalonia.Controls.Window?>(), Arg.Any<bool>());
+        launched.Select(u => u.AbsoluteUri).Should().Equal(opened ? ["https://example.invalid/docs"] : []);
+    }
+
+    [Theory]
+    [InlineData("file:///c:/Windows/System32/calc.exe")]
+    [InlineData("not an address")]
+    public async Task OnlyAWebAddressIsEverOpenedOutside_AndAnythingElseIsNotEvenAskedAbout(string uri)
+    {
+        var client = Substitute.For<ILspClient>();
+        var windows = new Windows();
+        var launched = 0;
+        using var presenter = Presenter(client, windows, launch: _ => { launched++; return Task.FromResult(true); });
+        var request = new ServerDocumentRequest(uri, true, true, null, NeverWithdrawn);
+
+        client.DocumentRequested += Raise.Event<EventHandler<ServerDocumentRequest>>(client, request);
+
+        (await request.Answer!.WaitAsync(TimeSpan.FromSeconds(10), Token)).Should().BeFalse();
+        await windows.Manager.DidNotReceiveWithAnyArgs().MessageBox(default!);
+        launched.Should().Be(0);
     }
 
     public async ValueTask DisposeAsync()

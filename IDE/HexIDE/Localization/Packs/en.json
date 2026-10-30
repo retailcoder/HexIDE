@@ -462,6 +462,7 @@
     "Str.Dialog.AddinConsent.Title": "An add-in is asking to load",
     "Str.Dialog.ServerPrompt.Title": "{0} asks",
     "Str.Dialog.ServerPrompt.Close": "Close",
+    "Str.Dialog.ServerDocument.OpenExternal": "{0} asks to open this address in your browser:\n\n{1}\n\nOpen it?",
     "Str.Dialog.AddinConsent.TrustDetails": "Trust details…",
     "Str.Dialog.AddinConsent.UnsignedWarning": "This add-in is NOT signed. Only allow it if you built it yourself and understand the risk.",
     "Str.Dialog.AddinConsent.AccessWarning": "If you allow it, this add-in runs with full access to your computer: it can read and modify your files and use the network. Only allow add-ins you trust.",

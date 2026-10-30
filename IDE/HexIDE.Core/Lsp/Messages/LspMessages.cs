@@ -1137,7 +1137,13 @@ public sealed record CancelStringRequestParams([property: JsonPropertyName("id")
 public record WindowClientCapabilities(
     [property: JsonPropertyName("workDoneProgress")] bool WorkDoneProgress = true,
     [property: JsonPropertyName("showMessage")]
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShowMessageRequestClientCapabilities? ShowMessage = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShowMessageRequestClientCapabilities? ShowMessage = null,
+    [property: JsonPropertyName("showDocument")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ShowDocumentClientCapabilities? ShowDocument = null);
+
+/// <summary>That the client answers <c>window/showDocument</c>.</summary>
+public record ShowDocumentClientCapabilities(
+    [property: JsonPropertyName("support")] bool Support = true);
 
 /// <summary>
 /// That the client answers <c>window/showMessageRequest</c>, and hands back the chosen action as the server sent it, its
