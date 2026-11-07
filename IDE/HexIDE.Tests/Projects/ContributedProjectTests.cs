@@ -55,6 +55,7 @@ public sealed class ContributedProjectTests : IDisposable
         {
             "Str.ContributedProject.OpenError" => "Could not open {0} with {1}: {2}",
             "Str.ContributedProject.NoReader" => "Str.ContributedProject.NoReader {0}",
+            "Str.ProjectLoad.AlreadyOpen" => "Project {0} is already open.",
             var key => key + " {0} {1}",
         });
         var dock = Substitute.For<IDocumentDockService>();
@@ -471,7 +472,7 @@ public sealed class ContributedProjectTests : IDisposable
 
         await reopen.Should().ThrowAsync<OperationCanceledException>();
         _loaded.Should().ContainSingle();
-        await _windows.Received(1).MessageBox("Project .rdproj is already opened.",
+        await _windows.Received(1).MessageBox("Project .rdproj is already open.",
             Arg.Any<string?>(), Arg.Any<MessageBoxButtons>(), Arg.Any<MessageBoxIcon>(), Arg.Any<Avalonia.Controls.Window?>(), Arg.Any<bool>());
     }
 
