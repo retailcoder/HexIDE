@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "לא ניתן היה לשחזר כראוי את הפרויקט מהנתונים:",
     "Str.ProjectLoad.MoreWarnings": "...ועוד {0} אזהרות (הרשימה המלאה ביומן).",
     "Str.ProjectLoad.ActiveXDocuments": "פרויקט זה מכיל קובצי ActiveX Document (.dob) שאינם נתמכים ב-HexIDE ולכן דולגו:\n\n{0}\n\nמסמכי ActiveX נזקקו ל-Internet Explorer או לקלסרים של Office כמארח, ושניהם למעשה יצאו משימוש. סוג פרויקט זה אינו בתחום התמיכה של HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "הפרויקט {0} כבר פתוח.",
     "Str.CodeEditor.RangeEditRefused": "העריכות נדחו: {0}. דבר לא השתנה.",
     "Str.Dialog.MessageBox.Button.Ok": "אישור",
     "Str.Dialog.MessageBox.Button.Cancel": "ביטול",

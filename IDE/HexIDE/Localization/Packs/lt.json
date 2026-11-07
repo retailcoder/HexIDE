@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Nepavyko tinkamai deserializuoti projekto:",
     "Str.ProjectLoad.MoreWarnings": "...ir dar {0} įspėjimų (visas sąrašas žurnale).",
     "Str.ProjectLoad.ActiveXDocuments": "Šiame projekte yra ActiveX Document failų (.dob), kurių HexIDE nepalaiko; jie praleisti:\n\n{0}\n\nActiveX Document veikimui reikėjo Internet Explorer arba Office segtuvų. Abu šie pagrindai praktiškai nebenaudojami. Šio tipo projektai nepatenka į HexIDE veikimo sritį.",
+    "Str.ProjectLoad.AlreadyOpen": "Projektas {0} jau atidarytas.",
     "Str.PropDesc.ImageWidth": "Paveikslėlių plotis.",
     "Str.PropDesc.ImageHeight": "Paveikslėlių aukštis.",
     "Str.PropDesc.MaskColor": "Skaidriems pikseliams naudojama spalva.",

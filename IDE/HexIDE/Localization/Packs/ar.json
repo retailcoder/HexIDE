@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "تعذّرت إزالة تسلسل المشروع بصورة صحيحة:",
     "Str.ProjectLoad.MoreWarnings": "...و{0} تحذيرات أخرى (راجع السجل للاطلاع على القائمة الكاملة).",
     "Str.ProjectLoad.ActiveXDocuments": "يحتوي هذا المشروع على ملفات مستندات ActiveX ‏(.dob) غير المدعومة في HexIDE وقد تم تخطيها:\n\n{0}\n\nكانت مستندات ActiveX تتطلب Internet Explorer أو مجلدات Office كمضيف، وكلاهما لم يعد مستخدمًا فعليًا. هذا النوع من المشاريع خارج نطاق HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "المشروع {0} مفتوح بالفعل.",
     "Str.CodeEditor.RangeEditRefused": "رُفضت التعديلات: {0}. لم يتغير شيء.",
     "Str.Dialog.MessageBox.Button.Ok": "موافق",
     "Str.Dialog.MessageBox.Button.Cancel": "إلغاء",

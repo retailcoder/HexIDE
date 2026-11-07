@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Kunne ikke deserialisere prosjektet riktig:",
     "Str.ProjectLoad.MoreWarnings": "...og {0} advarsler til (se loggen for hele listen).",
     "Str.ProjectLoad.ActiveXDocuments": "Dette prosjektet inneholder ActiveX Document-filer (.dob) som ikke støttes i HexIDE, og som er hoppet over:\n\n{0}\n\nActiveX Documents krevde Internet Explorer eller Office-permer som vert, og begge er nå i praksis ute av bruk. Denne prosjekttypen er utenfor omfanget til HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Prosjektet {0} er allerede åpent.",
     "Str.CodeEditor.RangeEditRefused": "Endringer avvist: {0}. Ingenting ble endret.",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "Avbryt",

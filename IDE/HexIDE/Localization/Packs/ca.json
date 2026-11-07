@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "No s'ha pogut deserialitzar correctament el projecte:",
     "Str.ProjectLoad.MoreWarnings": "...i {0} avisos més (consulteu el registre per veure la llista completa).",
     "Str.ProjectLoad.ActiveXDocuments": "Aquest projecte conté fitxers ActiveX Document (.dob) que no s'admeten a HexIDE i s'han omès:\n\n{0}\n\nEls ActiveX Documents requerien Internet Explorer o Microsoft Binder com a amfitrió, tots dos pràcticament en desús. Aquest tipus de projecte queda fora de l'abast d'HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "El projecte {0} ja està obert.",
     "Str.PropDesc.ImageWidth": "L'amplada de les imatges.",
     "Str.PropDesc.ImageHeight": "L'alçada de les imatges.",
     "Str.PropDesc.MaskColor": "El color utilitzat per als píxels transparents.",

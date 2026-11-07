@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Nije moguće ispravno deserijalizovati projekat:",
     "Str.ProjectLoad.MoreWarnings": "...i još {0} upozorenja (ceo spisak je u dnevniku).",
     "Str.ProjectLoad.ActiveXDocuments": "Ovaj projekat sadrži ActiveX Document datoteke (.dob), koje HexIDE ne podržava i koje su preskočene:\n\n{0}\n\nActiveX dokumentima je bio potreban Internet Explorer ili Office povezivač kao domaćin, a oba su praktično van upotrebe. Ovaj tip projekta je van opsega HexIDE-a.",
+    "Str.ProjectLoad.AlreadyOpen": "Projekat {0} je već otvoren.",
     "Str.PropDesc.ImageWidth": "Širina slika.",
     "Str.PropDesc.ImageHeight": "Visina slika.",
     "Str.PropDesc.MaskColor": "Boja za providne piksele.",

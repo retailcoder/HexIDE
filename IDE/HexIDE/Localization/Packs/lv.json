@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Neizdevās pareizi deserializēt projektu:",
     "Str.ProjectLoad.MoreWarnings": "...un vēl {0} brīdinājumi (pilnu sarakstu skatiet žurnālā).",
     "Str.ProjectLoad.ActiveXDocuments": "Šajā projektā ir ActiveX Document faili (.dob), kas HexIDE netiek atbalstīti un tika izlaisti:\n\n{0}\n\nActiveX dokumentiem bija nepieciešams Internet Explorer vai Office saistītājs kā resursdators; abi praktiski vairs netiek lietoti. Šis projekta tips ir ārpus HexIDE tvēruma.",
+    "Str.ProjectLoad.AlreadyOpen": "Projekts {0} jau ir atvērts.",
     "Str.PropDesc.ImageWidth": "Attēlu platums.",
     "Str.PropDesc.ImageHeight": "Attēlu augstums.",
     "Str.PropDesc.MaskColor": "Caurspīdīgajiem pikseļiem lietotā krāsa.",

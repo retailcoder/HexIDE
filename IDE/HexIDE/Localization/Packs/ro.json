@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Proiectul nu a putut fi deserializat corect:",
     "Str.ProjectLoad.MoreWarnings": "...și încă {0} avertismente (consultă jurnalul pentru lista completă).",
     "Str.ProjectLoad.ActiveXDocuments": "Acest proiect conține fișiere ActiveX Document (.dob), care nu sunt acceptate în HexIDE și au fost omise:\n\n{0}\n\nActiveX Documents necesitau Internet Explorer sau containere Office ca gazdă, ambele fiind practic abandonate. Acest tip de proiect nu intră în domeniul HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Proiectul {0} este deja deschis.",
     "Str.PropDesc.ImageWidth": "Lățimea imaginilor.",
     "Str.PropDesc.ImageHeight": "Înălțimea imaginilor.",
     "Str.PropDesc.MaskColor": "Culoarea folosită pentru pixelii transparenți.",

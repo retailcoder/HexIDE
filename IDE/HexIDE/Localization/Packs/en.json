@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Couldn't properly deserialize the project:",
     "Str.ProjectLoad.MoreWarnings": "...and {0} more warnings (see log for full list).",
     "Str.ProjectLoad.ActiveXDocuments": "This project contains ActiveX Document files (.dob) which are not supported in HexIDE and have been skipped:\n\n{0}\n\nActiveX Documents required Internet Explorer or Office binders as a host, both of which are effectively defunct. This project type is out of scope for HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Project {0} is already open.",
     "Str.PropDesc.ImageWidth": "The width of the images.",
     "Str.PropDesc.ImageHeight": "The height of the images.",
     "Str.PropDesc.MaskColor": "The color used for transparent pixels.",

@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Проектът не може да се десериализира правилно:",
     "Str.ProjectLoad.MoreWarnings": "...и още {0} предупреждения (вижте пълния списък в дневника).",
     "Str.ProjectLoad.ActiveXDocuments": "Този проект съдържа файлове ActiveX Document (.dob), които не се поддържат в HexIDE и са пропуснати:\n\n{0}\n\nActiveX Documents изискваха Internet Explorer или контейнерите на Office като хост, които на практика вече не се използват. Този тип проект е извън обхвата на HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Проектът {0} вече е отворен.",
     "Str.PropDesc.ImageWidth": "Ширината на изображенията.",
     "Str.PropDesc.ImageHeight": "Височината на изображенията.",
     "Str.PropDesc.MaskColor": "Цветът, използван за прозрачни пиксели.",

@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Projektin deserialisointi ei onnistunut oikein:",
     "Str.ProjectLoad.MoreWarnings": "...ja {0} muuta varoitusta (katso koko luettelo lokista).",
     "Str.ProjectLoad.ActiveXDocuments": "Tämä projekti sisältää ActiveX-asiakirjatiedostoja (.dob), joita HexIDE ei tue ja jotka on ohitettu:\n\n{0}\n\nActiveX-asiakirjat tarvitsivat isännäksi Internet Explorerin tai Officen salkut, jotka molemmat ovat käytännössä poistuneet käytöstä. Tämä projektityyppi ei kuulu HexIDEn tuettuun toiminta-alueeseen.",
+    "Str.ProjectLoad.AlreadyOpen": "Projekti {0} on jo avoinna.",
     "Str.CodeEditor.RangeEditRefused": "Muokkaukset hylättiin: {0}. Mitään ei muutettu.",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "Peruuta",

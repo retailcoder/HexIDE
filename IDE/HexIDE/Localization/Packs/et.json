@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Projekti korrektne deserialiseerimine nurjus:",
     "Str.ProjectLoad.MoreWarnings": "...ja veel {0} hoiatust (täielik loend on logis).",
     "Str.ProjectLoad.ActiveXDocuments": "See projekt sisaldab ActiveX Documenti faile (.dob), mida HexIDE ei toeta ja mis jäeti vahele:\n\n{0}\n\nActiveX Document vajas hostina Internet Explorerit või Office'i köitjat, mis on mõlemad sisuliselt kasutuselt kadunud. See projektitüüp jääb HexIDE ulatusest välja.",
+    "Str.ProjectLoad.AlreadyOpen": "Projekt {0} on juba avatud.",
     "Str.PropDesc.ImageWidth": "Piltide laius.",
     "Str.PropDesc.ImageHeight": "Piltide kõrgus.",
     "Str.PropDesc.MaskColor": "Läbipaistvate pikslite värv.",

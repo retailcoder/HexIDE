@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "無法正確還原序列化的專案：",
     "Str.ProjectLoad.MoreWarnings": "……還有 {0} 則警告（完整清單請參閱記錄）。",
     "Str.ProjectLoad.ActiveXDocuments": "此專案包含 HexIDE 不支援的 ActiveX 文件檔案 (.dob)，已略過這些檔案：\n\n{0}\n\nActiveX 文件需要 Internet Explorer 或 Office 活頁夾作為裝載程式，而兩者實際上均已淘汰。此專案類型不在 HexIDE 的支援範圍內。",
+    "Str.ProjectLoad.AlreadyOpen": "專案 {0} 已開啟。",
     "Str.CodeEditor.RangeEditRefused": "編輯遭拒：{0}。未作任何變更。",
     "Str.Dialog.MessageBox.Button.Ok": "確定",
     "Str.Dialog.MessageBox.Button.Cancel": "取消",

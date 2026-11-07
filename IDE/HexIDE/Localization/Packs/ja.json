@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "プロジェクトを正しく逆シリアル化できませんでした:",
     "Str.ProjectLoad.MoreWarnings": "...ほかに {0} 件の警告があります（全一覧はログを参照）。",
     "Str.ProjectLoad.ActiveXDocuments": "このプロジェクトには HexIDE でサポートされていない ActiveX Document ファイル（.dob）が含まれているため、スキップされました:\n\n{0}\n\nActiveX Document はホストとして Internet Explorer または Office バインダーを必要としていましたが、いずれも現在は事実上使われていません。このプロジェクトの種類は HexIDE の対象外です。",
+    "Str.ProjectLoad.AlreadyOpen": "プロジェクト {0} は既に開かれています。",
     "Str.CodeEditor.RangeEditRefused": "編集は拒否されました: {0}。何も変更されていません。",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "キャンセル",

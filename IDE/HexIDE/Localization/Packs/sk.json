@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Projekt sa nepodarilo správne deserializovať:",
     "Str.ProjectLoad.MoreWarnings": "...a ďalších {0} upozornení (úplný zoznam nájdete v denníku).",
     "Str.ProjectLoad.ActiveXDocuments": "Tento projekt obsahuje súbory ActiveX Document (.dob), ktoré HexIDE nepodporuje a ktoré boli preskočené:\n\n{0}\n\nActiveX Documents vyžadovali ako hostiteľa Internet Explorer alebo zakladače Office, ktoré sa už prakticky nepoužívajú. Tento typ projektu je mimo rozsahu HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Projekt {0} je už otvorený.",
     "Str.PropDesc.ImageWidth": "Šírka obrázkov.",
     "Str.PropDesc.ImageHeight": "Výška obrázkov.",
     "Str.PropDesc.MaskColor": "Farba používaná pre priehľadné pixely.",

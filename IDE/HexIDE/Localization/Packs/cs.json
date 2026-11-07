@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Projekt se nepodařilo správně deserializovat:",
     "Str.ProjectLoad.MoreWarnings": "...a dalších {0} upozornění (úplný seznam najdete v protokolu).",
     "Str.ProjectLoad.ActiveXDocuments": "Tento projekt obsahuje soubory dokumentů ActiveX (.dob), které HexIDE nepodporuje a které byly přeskočeny:\n\n{0}\n\nDokumenty ActiveX vyžadovaly jako hostitele Internet Explorer nebo pořadače Office; obojí je dnes prakticky nepoužívané. Tento typ projektu je mimo rozsah HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Projekt {0} je již otevřen.",
     "Str.CodeEditor.RangeEditRefused": "Úpravy odmítnuty: {0}. Nic nebylo změněno.",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "Zrušit",

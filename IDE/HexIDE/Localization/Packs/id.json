@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Proyek tidak dapat dideserialisasi dengan benar:",
     "Str.ProjectLoad.MoreWarnings": "...dan {0} peringatan lainnya (lihat log untuk daftar lengkap).",
     "Str.ProjectLoad.ActiveXDocuments": "Proyek ini berisi berkas ActiveX Document (.dob) yang tidak didukung di HexIDE dan telah dilewati:\n\n{0}\n\nActiveX Documents memerlukan Internet Explorer atau binder Office sebagai host, yang keduanya kini praktis tidak digunakan lagi. Jenis proyek ini berada di luar cakupan HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Proyek {0} sudah terbuka.",
     "Str.CodeEditor.RangeEditRefused": "Suntingan ditolak: {0}. Tidak ada yang diubah.",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "Batal",

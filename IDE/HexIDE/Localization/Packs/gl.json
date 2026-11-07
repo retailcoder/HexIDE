@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Non se puido deserializar correctamente o proxecto:",
     "Str.ProjectLoad.MoreWarnings": "...e {0} avisos máis (consulte o rexistro para ver a lista completa).",
     "Str.ProjectLoad.ActiveXDocuments": "Este proxecto contén ficheiros ActiveX Document (.dob) que HexIDE non admite e que se omitiron:\n\n{0}\n\nOs documentos ActiveX requirían Internet Explorer ou os portafolios de Office como anfitrión, ambos practicamente en desuso. Este tipo de proxecto queda fóra do ámbito de HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "O proxecto {0} xa está aberto.",
     "Str.PropDesc.ImageWidth": "A largura das imaxes.",
     "Str.PropDesc.ImageHeight": "A altura das imaxes.",
     "Str.PropDesc.MaskColor": "A cor empregada para os píxeles transparentes.",

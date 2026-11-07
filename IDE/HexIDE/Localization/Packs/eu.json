@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "Ezin izan da proiektua behar bezala deserializatu:",
     "Str.ProjectLoad.MoreWarnings": "...eta beste {0} abisu (ikusi egunkaria zerrenda osorako).",
     "Str.ProjectLoad.ActiveXDocuments": "Proiektu honek HexIDEk onartzen ez dituen ActiveX Document fitxategiak (.dob) ditu, eta saltatu egin dira:\n\n{0}\n\nActiveX Document objektuek Internet Explorer edo Office lokailuak behar zituzten ostalari gisa, eta biak erabileratik kanpo daude praktikan. Proiektu mota hau HexIDEren esparrutik kanpo dago.",
+    "Str.ProjectLoad.AlreadyOpen": "{0} proiektua irekita dago dagoeneko.",
     "Str.PropDesc.ImageWidth": "Irudien zabalera.",
     "Str.PropDesc.ImageHeight": "Irudien altuera.",
     "Str.PropDesc.MaskColor": "Pixel gardenetarako erabiltzen den kolorea.",

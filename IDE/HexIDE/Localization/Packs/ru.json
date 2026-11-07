@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Не удалось корректно десериализовать проект:",
     "Str.ProjectLoad.MoreWarnings": "...и ещё {0} предупреждений (полный список см. в журнале).",
     "Str.ProjectLoad.ActiveXDocuments": "Этот проект содержит файлы документов ActiveX (.dob), которые не поддерживаются в HexIDE и были пропущены:\n\n{0}\n\nДля размещения документов ActiveX требовались Internet Explorer или подшивки Office; оба средства практически вышли из употребления. Этот тип проекта не входит в область поддержки HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Проект {0} уже открыт.",
     "Str.CodeEditor.RangeEditRefused": "Правки отклонены: {0}. Ничего не изменено.",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "Отмена",

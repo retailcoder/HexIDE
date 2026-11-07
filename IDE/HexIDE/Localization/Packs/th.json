@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "ไม่สามารถอ่านคืนโครงการได้อย่างถูกต้อง:",
     "Str.ProjectLoad.MoreWarnings": "...และคำเตือนอีก {0} รายการ (ดูรายการทั้งหมดในบันทึก)",
     "Str.ProjectLoad.ActiveXDocuments": "โครงการนี้มีไฟล์ ActiveX Document (.dob) ซึ่ง HexIDE ไม่รองรับ จึงข้ามไป:\n\n{0}\n\nActiveX Document ต้องใช้ Internet Explorer หรือ Office binder เป็นโฮสต์ ซึ่งทั้งสองแทบไม่มีการใช้งานแล้ว โครงการชนิดนี้อยู่นอกขอบเขตของ HexIDE",
+    "Str.ProjectLoad.AlreadyOpen": "โครงการ {0} เปิดอยู่แล้ว",
     "Str.PropDesc.ImageWidth": "ความกว้างของรูปภาพ",
     "Str.PropDesc.ImageHeight": "ความสูงของรูปภาพ",
     "Str.PropDesc.MaskColor": "สีที่ใช้สำหรับพิกเซลโปร่งใส",

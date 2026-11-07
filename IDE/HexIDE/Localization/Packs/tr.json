@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Projenin seri durumdan çıkarılması düzgün şekilde tamamlanamadı:",
     "Str.ProjectLoad.MoreWarnings": "...ve {0} uyarı daha (tam liste için günlüğe bakın).",
     "Str.ProjectLoad.ActiveXDocuments": "Bu proje, HexIDE tarafından desteklenmeyen ve atlanan ActiveX Belgesi dosyaları (.dob) içeriyor:\n\n{0}\n\nActiveX Belgeleri, barındırıcı olarak Internet Explorer veya Office Ciltçisi gerektiriyordu; her ikisi de artık fiilen kullanım dışıdır. Bu proje türü HexIDE kapsamı dışındadır.",
+    "Str.ProjectLoad.AlreadyOpen": "{0} projesi zaten açık.",
     "Str.CodeEditor.RangeEditRefused": "Düzenlemeler reddedildi: {0}. Hiçbir şey değiştirilmedi.",
     "Str.Dialog.MessageBox.Button.Ok": "Tamam",
     "Str.Dialog.MessageBox.Button.Cancel": "İptal",

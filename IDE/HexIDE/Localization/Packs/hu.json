@@ -1047,6 +1047,7 @@
     "Str.ProjectLoad.Heading": "A projekt nem olvasható be megfelelően:",
     "Str.ProjectLoad.MoreWarnings": "...és további {0} figyelmeztetés (a teljes lista a naplóban).",
     "Str.ProjectLoad.ActiveXDocuments": "Ez a projekt ActiveX Document fájlokat (.dob) tartalmaz, amelyeket a HexIDE nem támogat, és kihagyott:\n\n{0}\n\nAz ActiveX Document működéséhez Internet Explorer vagy Office-irattáska kellett gazdaalkalmazásként; mára mindkettő lényegében megszűnt. Ez a projekttípus nem tartozik a HexIDE hatókörébe.",
+    "Str.ProjectLoad.AlreadyOpen": "A(z) {0} projekt már meg van nyitva.",
     "Str.PropDesc.ImageWidth": "A képek szélessége.",
     "Str.PropDesc.ImageHeight": "A képek magassága.",
     "Str.PropDesc.MaskColor": "Az átlátszó képpontokhoz használt szín.",

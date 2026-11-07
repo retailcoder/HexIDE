@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Le projet n'a pas pu être désérialisé correctement :",
     "Str.ProjectLoad.MoreWarnings": "...et {0} autres avertissements (consultez le journal pour la liste complète).",
     "Str.ProjectLoad.ActiveXDocuments": "Ce projet contient des fichiers de documents ActiveX (.dob), qui ne sont pas pris en charge dans HexIDE et ont été ignorés :\n\n{0}\n\nLes documents ActiveX nécessitaient Internet Explorer ou les classeurs Office comme hôte, tous deux désormais pratiquement abandonnés. Ce type de projet sort du périmètre de HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Le projet {0} est déjà ouvert.",
     "Str.CodeEditor.RangeEditRefused": "Modifications refusées : {0}. Rien n’a été modifié.",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "Annuler",

@@ -1009,6 +1009,7 @@
     "Str.ProjectLoad.Heading": "Nie udało się poprawnie zdeserializować projektu:",
     "Str.ProjectLoad.MoreWarnings": "...i jeszcze {0} ostrzeżeń (pełna lista znajduje się w dzienniku).",
     "Str.ProjectLoad.ActiveXDocuments": "Ten projekt zawiera pliki ActiveX Document (.dob), które nie są obsługiwane przez HexIDE i zostały pominięte:\n\n{0}\n\nDokumenty ActiveX wymagały programu Internet Explorer lub skoroszytów programu Office jako hosta. Oba te rozwiązania praktycznie wyszły już z użycia. Ten typ projektu nie mieści się w zakresie HexIDE.",
+    "Str.ProjectLoad.AlreadyOpen": "Projekt {0} jest już otwarty.",
     "Str.CodeEditor.RangeEditRefused": "Odrzucono zmiany: {0}. Nic nie zmieniono.",
     "Str.Dialog.MessageBox.Button.Ok": "OK",
     "Str.Dialog.MessageBox.Button.Cancel": "Anuluj",
